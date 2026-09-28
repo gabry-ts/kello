@@ -14,5 +14,13 @@ struct KelloApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {}
+    private var statusItem: StatusItemController?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        statusItem = StatusItemController {
+            AnyView(MenuContent())
+        } render: {
+            Date.now.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        }
+    }
 }
