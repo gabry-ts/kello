@@ -5,6 +5,13 @@ import SwiftUI
 struct KelloApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
+    init() {
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--render-icon"), args.indices.contains(i + 1) {
+            exit(MainActor.assumeIsolated { Snapshots.renderIconSet(to: URL(fileURLWithPath: args[i + 1])) })
+        }
+    }
+
     /// The menu bar item is an NSStatusItem owned by the app delegate; this scene only
     /// satisfies SwiftUI's need for one.
     var body: some Scene {
