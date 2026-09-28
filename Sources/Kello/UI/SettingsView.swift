@@ -18,16 +18,19 @@ struct SettingsView: View {
 
     enum Pane: String, CaseIterable, Hashable {
         case general
+        case menuBar
 
         var title: String {
             switch self {
             case .general: "General"
+            case .menuBar: "Menu Bar"
             }
         }
 
         var icon: String {
             switch self {
             case .general: "gearshape"
+            case .menuBar: "menubar.rectangle"
             }
         }
     }
@@ -63,6 +66,7 @@ struct SettingsView: View {
     private func paneView(_ pane: Pane) -> some View {
         switch pane {
         case .general: GeneralView()
+        case .menuBar: MenuBarSettingsView()
         }
     }
 }

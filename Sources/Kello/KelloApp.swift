@@ -27,8 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 self?.statusItem?.closePopover()
                 self?.openSettingsWindow()
             }))
-        } render: {
-            Date.now.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        } render: { [store] in
+            MenuBarFormat.string(for: .now, settings: store.settings.menuBar)
         }
     }
 
