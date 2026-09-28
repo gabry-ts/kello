@@ -22,11 +22,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         store.saveNow()
 
-        statusItem = StatusItemController {
-            AnyView(MenuContent(openSettings: { [weak self] in
-                self?.statusItem?.closePopover()
-                self?.openSettingsWindow()
-            }))
+        statusItem = StatusItemController { [store] in
+            AnyView(
+                MenuContent(openSettings: { [weak self] in
+                    self?.statusItem?.closePopover()
+                    self?.openSettingsWindow()
+                })
+                .environment(store)
+            )
         } render: { [store] in
             MenuBarFormat.string(for: .now, settings: store.settings.menuBar)
         }

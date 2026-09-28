@@ -1,8 +1,22 @@
+import KelloCore
 import SwiftUI
 
 struct GeneralView: View {
+    @Environment(SettingsStore.self) private var store
+
     var body: some View {
+        @Bindable var store = store
         Form {
+            Section {
+                Picker("First day of the week", selection: $store.settings.firstWeekday) {
+                    Text("System Default").tag(FirstWeekday.system)
+                    Text("Monday").tag(FirstWeekday.monday)
+                    Text("Sunday").tag(FirstWeekday.sunday)
+                }
+                Toggle("Show week numbers", isOn: $store.settings.showWeekNumbers)
+            } header: {
+                Text("Calendar")
+            }
             Section {
                 LabeledContent("Version", value: AppVersion.string)
             }
