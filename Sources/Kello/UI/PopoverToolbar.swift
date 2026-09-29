@@ -112,6 +112,8 @@ private struct TabSwitch: View {
             segment("Reminders", tab: .reminders)
         }
         .padding(3)
+        // Only the selection capsule slides; the list below swaps without morphing rows.
+        .animation(Theme.spring(reduceMotion), value: selection)
         .glassEffect(.regular, in: .capsule)
         .glassEdge(Capsule())
     }
@@ -119,7 +121,7 @@ private struct TabSwitch: View {
     private func segment(_ title: LocalizedStringKey, tab: ListTab) -> some View {
         let isSelected = selection == tab
         return Button {
-            withAnimation(Theme.spring(reduceMotion)) { selection = tab }
+            selection = tab
         } label: {
             Text(title)
                 .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
