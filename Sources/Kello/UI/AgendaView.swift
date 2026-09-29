@@ -4,7 +4,8 @@ import SwiftUI
 /// The scrolling list under the grid: an optional "Next up" card, then sections with a
 /// header and the day's holidays, then their reminders (grouped in one card), events and
 /// the "now" marker. Grows
-/// with its content up to `maxHeight`, then scrolls, fading out at the bottom.
+/// with its content up to `maxHeight`, or keeps `fixedHeight`, then scrolls, fading out
+/// at the bottom.
 struct AgendaView: View {
     let sections: [AgendaSection]
     let now: Date
@@ -12,6 +13,9 @@ struct AgendaView: View {
     var emptyText: LocalizedStringKey = "No Events"
     var emptyImage = "calendar"
     var maxHeight: CGFloat = 320
+    /// Keeps the list this tall whatever it holds, so the popover doesn't resize when
+    /// switching tabs or days.
+    var fixedHeight: CGFloat?
     var openEvent: (CalendarEvent) -> Void = { _ in }
     var openReminder: (ReminderItem) -> Void = { _ in }
     var completeReminder: (ReminderItem) -> Void = { _ in }
@@ -19,9 +23,9 @@ struct AgendaView: View {
 
     var body: some View {
         if sections.isEmpty && nextUp == nil {
-            EmptyState(text: emptyText, systemImage: emptyImage)
+            EmptyState(text: emptyText, systemImage: emptyImage, height: fixedHeight)
         } else {
-            let scrolls = contentHeight > maxHeight
+            let scrolls = contentHeight > (fixedHeight ?? maxHeight)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if let nextUp {
@@ -52,7 +56,7 @@ struct AgendaView: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .scrollIndicators(.never)
-            .frame(height: min(max(contentHeight, 1), maxHeight))
+            .frame(height: fixedHeight ?? min(max(contentHeight, 1), maxHeight), alignment: .top)
             .padding(.horizontal, -4)
             .mask {
                 VStack(spacing: 0) {
@@ -192,9 +196,11 @@ struct HolidayLabels: View {
 struct EmptyState: View {
     let text: LocalizedStringKey
     let systemImage: String
+    /// Stands in for a list of this height: centered in it, without a card.
+    var height: CGFloat?
 
     var body: some View {
-        VStack(spacing: 8) {
+        let label = VStack(spacing: 8) {
             Image(systemName: systemImage)
                 .font(.system(size: 22, weight: .regular))
                 .symbolRenderingMode(.hierarchical)
@@ -204,7 +210,12 @@ struct EmptyState: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 22)
-        .surface(radius: Theme.groupRadius, elevated: false)
+        if let height {
+            label.frame(height: height)
+        } else {
+            label
+                .padding(.vertical, 22)
+                .surface(radius: Theme.groupRadius, elevated: false)
+        }
     }
 }

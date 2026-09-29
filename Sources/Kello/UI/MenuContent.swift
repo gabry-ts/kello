@@ -100,6 +100,7 @@ struct MenuContent: View {
                     now: now,
                     emptyText: "No Reminders",
                     emptyImage: "checklist.checked",
+                    fixedHeight: Theme.listHeight,
                     openReminder: { route = .reminder(ReminderDraft($0)) },
                     completeReminder: complete)
             } else if canReadEvents {
@@ -110,6 +111,7 @@ struct MenuContent: View {
                                               holidays: holidays(in: agendaDays, calendarID: holidayCalendarID), now: now),
                     now: now,
                     nextUp: showsToday ? Agenda.nextUp(events: todayEvents, now: now) : nil,
+                    fixedHeight: Theme.listHeight,
                     openEvent: { event in
                         if let draft = calendars.draft(for: event) { route = .event(draft) }
                     })

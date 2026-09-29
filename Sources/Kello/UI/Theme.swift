@@ -13,6 +13,9 @@ enum Theme {
     static let spacing: CGFloat = 12
     static let rowSpacing: CGFloat = 6
 
+    /// The agenda and reminders under the grid, fixed so the popover keeps one height.
+    static let listHeight: CGFloat = 320
+
     // MARK: Radii
 
     /// The grid, the Next up card and the editor sections.
