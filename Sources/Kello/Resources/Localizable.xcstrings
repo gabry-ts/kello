@@ -1724,6 +1724,23 @@
         }
       }
     },
+    "reminderPriorityNone" : {
+      "comment" : "Reminder priority picker: no priority set. Uses the Italian feminine \"Nessuna\" (agreeing with \"priorità\"), unlike the masculine \"Nessuno\" used for other \"None\" options in the app.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessuna"
+          }
+        }
+      }
+    },
     "today" : {
       "localizations" : {
         "it" : {

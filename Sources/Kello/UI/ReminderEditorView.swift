@@ -54,7 +54,7 @@ struct ReminderEditorView: View {
                 FormCard {
                     FormRow("Priority") {
                         Picker("", selection: $draft.priority) {
-                            ForEach(ReminderPriority.allCases, id: \.self) { Text($0.title).tag($0) }
+                            ForEach(ReminderPriority.allCases, id: \.self) { $0.title.tag($0) }
                         }
                         .labelsHidden()
                         .fixedSize()
@@ -123,12 +123,14 @@ struct ReminderEditorView: View {
 }
 
 extension ReminderPriority {
-    var title: LocalizedStringKey {
+    var title: Text {
         switch self {
-        case .none: "None"
-        case .low: "Low"
-        case .medium: "Medium"
-        case .high: "High"
+        // A distinct key from the other "None" strings in the app: Italian needs the
+        // feminine "Nessuna" here, agreeing with "priorità", not the masculine "Nessuno".
+        case .none: Text(verbatim: String(localized: "reminderPriorityNone", defaultValue: "None"))
+        case .low: Text("Low")
+        case .medium: Text("Medium")
+        case .high: Text("High")
         }
     }
 }
