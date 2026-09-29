@@ -162,12 +162,9 @@ final class AgendaTests: XCTestCase {
         let withNotes = CalendarEvent(eventIdentifier: "2", calendarID: "c", title: "t", start: now, end: now,
                                       location: "", notes: "\n  First line\nSecond", color: blue)
         XCTAssertEqual(withNotes.subtitle, "First line")
-    }
-
-    func testMeetingLinkDetection() {
-        XCTAssertEqual(MeetingLink.find(in: [nil, "Join: https://us02web.zoom.us/j/123?pwd=x"])?.host(), "us02web.zoom.us")
-        XCTAssertEqual(MeetingLink.find(in: ["https://meet.google.com/abc-defg-hij"])?.absoluteString, "https://meet.google.com/abc-defg-hij")
-        XCTAssertNil(MeetingLink.find(in: ["https://example.com/zoom.us", "Room 4"]))
+        let invitation = CalendarEvent(eventIdentifier: "3", calendarID: "c", title: "t", start: now, end: now,
+                                       notes: "________________\nMicrosoft Teams meeting", color: blue)
+        XCTAssertEqual(invitation.subtitle, "Microsoft Teams meeting")
     }
 }
 

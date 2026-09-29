@@ -78,23 +78,3 @@ public struct AgendaStatus: Hashable, Sendable {
         todayColors = colors
     }
 }
-
-/// Finds a video call link among an event's URL, location and notes.
-public enum MeetingLink {
-    private static let hosts = [
-        "zoom.us", "meet.google.com", "teams.microsoft.com", "teams.live.com", "webex.com",
-        "facetime.apple.com", "whereby.com", "meet.jit.si", "chime.aws", "gotomeeting.com",
-    ]
-
-    public static func find(in texts: [String?]) -> URL? {
-        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else { return nil }
-        for text in texts.compactMap({ $0 }) where !text.isEmpty {
-            let range = NSRange(text.startIndex..., in: text)
-            for match in detector.matches(in: text, range: range) {
-                guard let url = match.url, let host = url.host()?.lowercased() else { continue }
-                if hosts.contains(where: { host == $0 || host.hasSuffix(".\($0)") }) { return url }
-            }
-        }
-        return nil
-    }
-}

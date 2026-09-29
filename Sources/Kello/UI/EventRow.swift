@@ -3,12 +3,16 @@ import SwiftUI
 
 /// One event in the agenda: a rounded card washed with the calendar color, a colored
 /// capsule on its leading edge, the title with the time on the right, then the location
-/// and the call or link host, with a recurrence icon. Past events are dimmed.
+/// and the call service or link host, with a recurrence icon. Rows with a call show a
+/// Join button while hovered. Past events are dimmed.
 struct EventRow: View {
     let event: CalendarEvent
     let now: Date
     var onOpen: (() -> Void)?
+    /// Draws the row as if hovered, for snapshots.
+    var showsHoverState = false
     @Environment(\.colorScheme) private var colorScheme
+    @State private var isHovered = false
 
     var body: some View {
         let isPast = event.isPast(now: now)
@@ -56,26 +60,38 @@ struct EventRow: View {
         }
         .contentShape(shape)
         .hoverHighlight()
+        .onHover { isHovered = $0 }
+        .animation(Theme.hover, value: isHovered)
         .onTapGesture { onOpen?() }
     }
 
-    /// The call or link host, then the recurrence icon on the right, or "Repeats" alone.
+    /// The call service or link host, then the recurrence icon on the right, or "Repeats"
+    /// alone. While hovered, a call's Join button takes the recurrence icon's place.
     @ViewBuilder
     private var details: some View {
         let link = event.meetingURL ?? event.url
+        let showsJoin = event.meetingURL != nil && (isHovered || showsHoverState)
         if let link {
             HStack(spacing: 5) {
                 Image(systemName: event.meetingURL != nil ? "video.fill" : "link")
                     .font(.system(size: 9.5))
-                Text(link.displayHost)
+                Text(event.linkLabel ?? link.displayHost)
                     .lineLimit(1)
+                Spacer(minLength: 0)
                 if event.isRecurring {
-                    Spacer(minLength: 0)
                     RecurrenceIcon()
+                        .opacity(showsJoin ? 0 : 1)
                 }
             }
             .font(.system(size: 11.5))
             .foregroundStyle(.secondary)
+            // An overlay, so showing the button doesn't change the row's height.
+            .overlay(alignment: .trailing) {
+                if showsJoin, let meetingURL = event.meetingURL {
+                    JoinButton(url: meetingURL, isCompact: true)
+                        .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .trailing)))
+                }
+            }
         } else if event.isRecurring {
             HStack(spacing: 4) {
                 RecurrenceIcon()
@@ -199,22 +215,13 @@ struct NextUpCard: View {
                     HStack(spacing: 5) {
                         Image(systemName: "video.fill")
                             .font(.system(size: 10))
-                        Text(meetingURL.displayHost)
+                        Text(event.linkLabel ?? meetingURL.displayHost)
                             .lineLimit(1)
                     }
                     .font(.system(size: 11.5))
                     .foregroundStyle(.secondary)
                     Spacer()
-                    Button {
-                        NSWorkspace.shared.open(meetingURL)
-                    } label: {
-                        Label("Join", systemImage: "video.fill")
-                            .font(.system(size: 12.5, weight: .semibold))
-                            .padding(.horizontal, 4)
-                    }
-                    .buttonStyle(.glassProminent)
-                    .buttonBorderShape(.capsule)
-                    .tint(Theme.join)
+                    JoinButton(url: meetingURL)
                 }
                 .padding(.top, 12)
             }
@@ -231,13 +238,62 @@ struct NextUpCard: View {
     }
 }
 
+/// Opens a call: a glossy blue capsule, smaller in event rows. Painted, like today's circle
+/// in the grid, rather than a prominent button style, which turns gray whenever a pinned
+/// popover isn't key.
+struct JoinButton: View {
+    let url: URL
+    var isCompact = false
+    @State private var isHovered = false
+
+    var body: some View {
+        Button {
+            NSWorkspace.shared.open(url)
+        } label: {
+            Label("Join", systemImage: "video.fill")
+                .font(.system(size: isCompact ? 11 : 12.5, weight: .semibold))
+                .labelStyle(JoinLabelStyle())
+                .foregroundStyle(.white)
+                .padding(.horizontal, isCompact ? 9 : 13)
+                .frame(height: isCompact ? 22 : 28)
+                .background {
+                    Capsule().fill(Theme.join.gradient)
+                        .shadow(color: Theme.join.opacity(0.4), radius: isCompact ? 3 : 4, y: 1.5)
+                    Capsule().fill(LinearGradient(colors: [.white.opacity(isHovered ? 0.30 : 0.18), .white.opacity(0)],
+                                                  startPoint: .top, endPoint: .center))
+                    Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
+                }
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(Theme.hover, value: isHovered)
+        .help("Join \(url.displayHost)")
+    }
+
+    private struct JoinLabelStyle: LabelStyle {
+        func makeBody(configuration: Configuration) -> some View {
+            HStack(spacing: 5) {
+                configuration.icon.imageScale(.small)
+                configuration.title
+            }
+        }
+    }
+}
+
 extension CalendarEvent {
     /// The location or first line of the notes, unless it's just the call link, which is
-    /// shown as its host instead.
+    /// shown as its service or host instead.
     var displayedSubtitle: String? {
         guard let subtitle else { return nil }
         if let link = meetingURL ?? url, subtitle == link.absoluteString { return nil }
+        if meetingURL != nil, subtitle.contains("://"), MeetingLink.find(in: [subtitle]) == meetingURL { return nil }
         return subtitle
+    }
+
+    /// "Google Meet", "Zoom" or "Teams" for a call, nil for other links.
+    var linkLabel: String? {
+        meetingService?.name
     }
 }
 

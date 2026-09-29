@@ -127,7 +127,8 @@ public struct CalendarEvent: Hashable, Sendable, Identifiable {
         start <= now && now < end
     }
 
-    /// The location, or else the first non-empty line of the notes.
+    /// The location, or else the first line of the notes with any letters or digits, which
+    /// skips the rules of underscores that invitations put above their call details.
     public var subtitle: String? {
         if let location = location?.trimmingCharacters(in: .whitespacesAndNewlines), !location.isEmpty {
             return location
@@ -135,7 +136,7 @@ public struct CalendarEvent: Hashable, Sendable, Identifiable {
         return notes?
             .split(whereSeparator: \.isNewline)
             .map { $0.trimmingCharacters(in: .whitespaces) }
-            .first { !$0.isEmpty }
+            .first { $0.contains { $0.isLetter || $0.isNumber } }
     }
 
     /// Whether the event touches `day`. All-day and timed events both end exclusively, so an

@@ -11,6 +11,8 @@ enum EditorRoute: Hashable {
 /// toolbar, today's counts, and the agenda or the reminders. Editors replace all of it while open.
 struct MenuContent: View {
     let openSettings: () -> Void
+    /// Replaces the clock, so snapshots show the same moment every time.
+    var fixedNow: Date?
     @Environment(SettingsStore.self) private var store
     @Environment(CalendarStore.self) private var calendars
     @State private var viewModel = MonthGridViewModel()
@@ -27,7 +29,7 @@ struct MenuContent: View {
             } else {
                 // Redrawn every minute so the "now" marker, past events and counts stay current.
                 TimelineView(.everyMinute) { context in
-                    content(now: context.date)
+                    content(now: fixedNow ?? context.date)
                 }
                 .transition(reduceMotion ? .opacity : .move(edge: .leading).combined(with: .opacity))
             }

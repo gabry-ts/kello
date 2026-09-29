@@ -20,8 +20,8 @@ enum Snapshots {
         let weekNumbersStore = SettingsStore(settings: weekNumbers)
 
         let calendars = CalendarStore(eventsAccess: .granted, remindersAccess: .granted,
-                                      events: SampleData.events(now: .now), calendars: SampleData.calendars,
-                                      reminders: SampleData.reminders(now: .now), reminderLists: SampleData.lists)
+                                      events: SampleData.events(now: SampleData.now), calendars: SampleData.calendars,
+                                      reminders: SampleData.reminders(now: SampleData.now), reminderLists: SampleData.lists)
         let unasked = CalendarStore(eventsAccess: .notDetermined, remindersAccess: .notDetermined)
         let denied = CalendarStore(eventsAccess: .granted, remindersAccess: .denied)
         let deniedEvents = CalendarStore(eventsAccess: .denied, remindersAccess: .notDetermined)
@@ -42,7 +42,7 @@ enum Snapshots {
                            name: "settings-\(pane.rawValue)-\(dark ? "dark" : "light")", dark: dark, dir: dir)
             }
         }
-        let sampleEvent = SampleData.events(now: .now)[0]
+        let sampleEvent = SampleData.events(now: SampleData.now)[0]
         snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).popoverFrame()
                         .environment(calendars), name: "editor-light", dark: false, dir: dir)
         snapPopover(EventEditorView(draft: .new(on: .now, now: .now, calendarID: "work"), onClose: {}).popoverFrame()
@@ -55,15 +55,29 @@ enum Snapshots {
         snapPopover(popover(SettingsStore(settings: remindersTab), calendars), name: "popover-reminders-dark", dark: true, dir: dir)
         snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).popoverFrame()
                         .environment(calendars), name: "editor-dark", dark: true, dir: dir)
+        for dark in [false, true] {
+            snapPopover(callRows, name: "event-rows-calls-\(dark ? "dark" : "light")", dark: dark, dir: dir)
+        }
         print("Snapshots written to \(dir.path)")
         return 0
     }
 
     private static func popover(_ store: SettingsStore, _ calendars: CalendarStore) -> some View {
-        MenuContent(openSettings: {})
+        MenuContent(openSettings: {}, fixedNow: SampleData.now)
             .environment(store)
             .environment(calendars)
             .environment(PopoverState())
+    }
+
+    /// Rows with calls, the upcoming one drawn hovered so its Join button shows.
+    private static var callRows: some View {
+        let calls = SampleData.events(now: SampleData.now).filter { $0.meetingURL != nil }
+        return VStack(spacing: Theme.rowSpacing) {
+            ForEach(Array(calls.enumerated()), id: \.element.id) { index, event in
+                EventRow(event: event, now: SampleData.now, showsHoverState: index == 1)
+            }
+        }
+        .popoverFrame()
     }
 
     // MARK: Icon
@@ -189,6 +203,11 @@ private struct Wallpaper: View {
 
 /// A plausible week of events around today, for snapshots only.
 private enum SampleData {
+    /// Mid-morning today, so the agenda has past and upcoming events and a Next up card.
+    static var now: Date {
+        Calendar.current.date(bySettingHour: 10, minute: 40, second: 0, of: .now) ?? .now
+    }
+
     static let calendars = [
         CalendarInfo(id: "work", title: "Work", sourceTitle: "iCloud", color: ItemColor(red: 0.2, green: 0.5, blue: 1), isWritable: true),
         CalendarInfo(id: "home", title: "Home", sourceTitle: "iCloud", color: ItemColor(red: 0.95, green: 0.35, blue: 0.3), isWritable: true),
@@ -223,19 +242,23 @@ private enum SampleData {
         }
         func color(_ id: String) -> ItemColor { calendars.first { $0.id == id }!.color }
         func event(_ title: String, _ calendarID: String, _ start: Date, _ end: Date, allDay: Bool = false, location: String? = nil,
-                   url: URL? = nil, recurring: Bool = false, declined: Bool = false) -> CalendarEvent {
+                   notes: String? = nil, url: URL? = nil, recurring: Bool = false, declined: Bool = false) -> CalendarEvent {
             CalendarEvent(eventIdentifier: "\(title)\(start)", calendarID: calendarID, title: title, start: start, end: end, isAllDay: allDay,
-                          location: location, url: url, isRecurring: recurring, isDeclined: declined, color: color(calendarID),
-                          meetingURL: MeetingLink.find(in: [url?.absoluteString, location]))
+                          location: location, notes: notes, url: url, isRecurring: recurring, isDeclined: declined, color: color(calendarID),
+                          meetingURL: MeetingLink.find(in: [url?.absoluteString, location, notes]))
         }
+        let teams = "https://eur03.safelinks.protection.outlook.com/?url=https%3A%2F%2Fteams.microsoft.com%2Fl%2Fmeetup-join%2F19%253ameeting_x%2540thread.v2%2F0&data=05"
         var events = [
             event("Design review", "work", at(0, 9), at(0, 9, 30), location: "https://meet.google.com/abc-defg-hij", recurring: true),
+            event("Client call", "work", at(0, 11, 15), at(0, 12), location: "Microsoft Teams Meeting",
+                  notes: "________________\nJoin the meeting now <\(teams)>"),
             event("Lunch with Sara", "home", at(0, 12, 30), at(0, 13, 30), location: "Trattoria da Mario"),
             event("Quarterly planning", "work", at(0, 15), at(0, 16), url: URL(string: "https://example.com/plan")),
             event("Old sync", "work", at(0, 17), at(0, 17, 30), declined: true),
             event("Running", "gym", at(0, 19), at(0, 20), recurring: true),
             event("Company offsite", "work", at(1, 0), at(3, 0), allDay: true),
             event("Dentist", "home", at(2, 10), at(2, 11)),
+            event("1:1 with Marco", "work", at(1, 14), at(1, 14, 30), url: URL(string: "https://us02web.zoom.us/j/8812345678"), recurring: true),
         ]
         for offset in [-9, -6, -2, 4, 8, 11, 15, 18] {
             events.append(event("Standup", "work", at(offset, 9), at(offset, 9, 15), recurring: true))
