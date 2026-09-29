@@ -37,10 +37,12 @@ enum Snapshots {
         hidden.hiddenCalendarIDs = ["work"]
         hidden.timeZones = SampleData.timeZones
         hidden.menuBarTimeZone = SampleData.timeZones[0].identifier
+        hidden.meetingAlerts.isEnabled = true
         snapPopover(popover(SettingsStore(settings: hidden), calendars), name: "popover-hidden-work-light", dark: false, dir: dir)
         for dark in [false, true] {
             for pane in SettingsView.Pane.allCases {
-                snapWindow(SettingsView(navigation: Navigation(pane: pane)).environment(SettingsStore(settings: hidden)).environment(calendars),
+                snapWindow(SettingsView(navigation: Navigation(pane: pane)).environment(SettingsStore(settings: hidden)).environment(calendars)
+                               .environment(MeetingNotifier(authorization: .authorized)),
                            name: "settings-\(pane.rawValue)-\(dark ? "dark" : "light")", dark: dark, dir: dir)
             }
         }

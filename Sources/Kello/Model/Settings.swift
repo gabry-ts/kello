@@ -23,6 +23,8 @@ struct Settings: Codable, Hashable {
     var timeZones: [WorldClockZone] = []
     /// One of `timeZones` whose time follows the date in the menu bar.
     var menuBarTimeZone: String?
+    /// Notifications shortly before meetings start.
+    var meetingAlerts = MeetingAlertSettings()
 
     init() {}
 
@@ -39,6 +41,7 @@ struct Settings: Codable, Hashable {
         holidayCalendar = try c.decodeIfPresent(HolidayCalendarChoice.self, forKey: .holidayCalendar) ?? d.holidayCalendar
         timeZones = try c.decodeIfPresent([WorldClockZone].self, forKey: .timeZones) ?? d.timeZones
         menuBarTimeZone = try c.decodeIfPresent(String.self, forKey: .menuBarTimeZone) ?? d.menuBarTimeZone
+        meetingAlerts = try c.decodeIfPresent(MeetingAlertSettings.self, forKey: .meetingAlerts) ?? d.meetingAlerts
     }
 
     func isCalendarVisible(_ id: String) -> Bool {

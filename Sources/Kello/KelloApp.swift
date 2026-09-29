@@ -27,6 +27,7 @@ struct KelloApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let store = SettingsStore()
     let calendars = CalendarStore()
+    private lazy var notifier = MeetingNotifier(store: store, calendars: calendars)
     private let popoverState = PopoverState()
     private let navigation = Navigation()
     private var window: NSWindow?
@@ -50,6 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
 
         Hotkey.register { [weak self] in self?.statusItem?.togglePopover() }
+        notifier.start { [weak self] day in self?.statusItem?.showPopover(on: day) }
 
         Task { await calendars.requestAccessIfNeeded() }
     }
@@ -80,6 +82,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let view = SettingsView(navigation: navigation)
             .environment(store)
             .environment(calendars)
+            .environment(notifier)
         let window = makeWindow(view, size: NSSize(width: 640, height: 420), minSize: NSSize(width: 560, height: 360))
         self.window = window
         window.makeKeyAndOrderFront(nil)

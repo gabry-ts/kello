@@ -18,6 +18,7 @@ struct MenuContent: View {
     var fixedNow: Date?
     @Environment(SettingsStore.self) private var store
     @Environment(CalendarStore.self) private var calendars
+    @Environment(PopoverState.self) private var popover
     @State private var viewModel = MonthGridViewModel()
     @State private var route: EditorRoute?
     @State private var isSearching = false
@@ -47,6 +48,13 @@ struct MenuContent: View {
         .task(id: calendars.revision) { await calendars.loadReminders() }
         .popoverFrame()
         .onAppear { calendars.refreshAccess() }
+        .onChange(of: popover.requestedDay, initial: true) { _, day in
+            guard let day else { return }
+            popover.requestedDay = nil
+            route = nil
+            isSearching = false
+            viewModel.show(day)
+        }
     }
 
     private func content(now: Date) -> some View {

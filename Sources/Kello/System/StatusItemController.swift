@@ -8,6 +8,9 @@ import SwiftUI
 final class PopoverState {
     /// A pinned popover stays open when clicking elsewhere, until closed from the menu bar.
     var isPinned = false
+    /// A day to show when the popover opens, e.g. from a meeting notification. The popover
+    /// selects it and clears it.
+    var requestedDay: Date?
 }
 
 /// The menu bar item and its popover. Managed directly instead of through MenuBarExtra,
@@ -99,6 +102,14 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
             NSApp.activate()
             showPopover()
         }
+    }
+
+    /// Opens the popover on `day`'s date, or moves an open one there.
+    func showPopover(on day: Date) {
+        state.requestedDay = day
+        guard !popover.isShown else { return }
+        NSApp.activate()
+        showPopover()
     }
 
     private func showPopover() {

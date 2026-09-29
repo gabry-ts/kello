@@ -19,6 +19,7 @@ struct SettingsView: View {
     enum Pane: String, CaseIterable, Hashable {
         case general
         case calendars
+        case notifications
         case menuBar
         case timeZones
 
@@ -26,6 +27,7 @@ struct SettingsView: View {
             switch self {
             case .general: "General"
             case .calendars: "Calendars"
+            case .notifications: "Notifications"
             case .menuBar: "Menu Bar"
             case .timeZones: "Time Zones"
             }
@@ -35,6 +37,7 @@ struct SettingsView: View {
             switch self {
             case .general: "gearshape.fill"
             case .calendars: "calendar"
+            case .notifications: "bell.badge.fill"
             case .menuBar: "menubar.rectangle"
             case .timeZones: "globe"
             }
@@ -45,6 +48,7 @@ struct SettingsView: View {
             switch self {
             case .general: .gray
             case .calendars: .red
+            case .notifications: .orange
             case .menuBar: .blue
             case .timeZones: .indigo
             }
@@ -87,6 +91,7 @@ struct SettingsView: View {
         switch pane {
         case .general: GeneralView()
         case .calendars: CalendarsSettingsView()
+        case .notifications: NotificationsSettingsView()
         case .menuBar: MenuBarSettingsView()
         case .timeZones: TimeZonesSettingsView()
         }
