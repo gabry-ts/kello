@@ -57,6 +57,9 @@ enum Snapshots {
                         .environment(calendars), name: "editor-dark", dark: true, dir: dir)
         for dark in [false, true] {
             snapPopover(callRows, name: "event-rows-calls-\(dark ? "dark" : "light")", dark: dark, dir: dir)
+            snapPopover(SearchView(now: SampleData.now, onClose: {}, onSelect: { _ in }, initialQuery: "stand")
+                            .popoverFrame().environment(store).environment(calendars),
+                        name: "search-\(dark ? "dark" : "light")", dark: dark, dir: dir)
         }
         print("Snapshots written to \(dir.path)")
         return 0

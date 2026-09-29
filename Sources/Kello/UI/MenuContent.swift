@@ -8,7 +8,8 @@ enum EditorRoute: Hashable {
 }
 
 /// The menu bar popover: the month grid, the permission prompt while needed, the
-/// toolbar, today's counts, and the agenda or the reminders. Editors replace all of it while open.
+/// toolbar, today's counts, and the agenda or the reminders. Search and the editors
+/// replace all of it while open.
 struct MenuContent: View {
     let openSettings: () -> Void
     /// Replaces the clock, so snapshots show the same moment every time.
@@ -17,6 +18,7 @@ struct MenuContent: View {
     @Environment(CalendarStore.self) private var calendars
     @State private var viewModel = MonthGridViewModel()
     @State private var route: EditorRoute?
+    @State private var isSearching = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var calendar: Calendar { .current }
@@ -25,6 +27,9 @@ struct MenuContent: View {
         ZStack(alignment: .top) {
             if let route {
                 editor(route)
+                    .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
+            } else if isSearching {
+                SearchView(now: fixedNow ?? .now, onClose: { isSearching = false }, onSelect: open)
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
             } else {
                 // Redrawn every minute so the "now" marker, past events and counts stay current.
@@ -35,6 +40,7 @@ struct MenuContent: View {
             }
         }
         .animation(Theme.spring(reduceMotion), value: route)
+        .animation(Theme.spring(reduceMotion), value: isSearching)
         // Reminders only come asynchronously, so they're fetched again on every change.
         .task(id: calendars.revision) { await calendars.loadReminders() }
         .popoverFrame()
@@ -66,6 +72,7 @@ struct MenuContent: View {
             }
             PopoverToolbar(
                 openSettings: openSettings,
+                search: canReadEvents ? { isSearching = true } : nil,
                 newEvent: canReadEvents ? { newEvent(on: viewModel.selectedDay, now: now) } : nil,
                 newReminder: canReadReminders ? { newReminder(on: viewModel.selectedDay) } : nil)
             if canReadEvents || canReadReminders {
@@ -104,6 +111,13 @@ struct MenuContent: View {
         case .reminder(let draft):
             ReminderEditorView(draft: draft) { self.route = nil }
         }
+    }
+
+    /// A search result: its day selected in the grid, and the event open in the editor.
+    private func open(_ event: CalendarEvent) {
+        viewModel.show(event.start)
+        isSearching = false
+        if let draft = calendars.draft(for: event) { route = .event(draft) }
     }
 
     private func newReminder(on day: Date) {

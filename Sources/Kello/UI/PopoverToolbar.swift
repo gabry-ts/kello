@@ -1,12 +1,15 @@
 import KelloCore
 import SwiftUI
 
-/// The row under the grid: the Agenda / Reminders switch, then pin, new and more.
+/// The row under the grid: the Agenda / Reminders switch, then search, pin, new and more
+/// in one glass capsule, like the month header's Today pill.
 struct PopoverToolbar: View {
     @Environment(SettingsStore.self) private var store
     @Environment(CalendarStore.self) private var calendars
     @Environment(PopoverState.self) private var popover
     let openSettings: () -> Void
+    /// Nil while calendars can't be read.
+    var search: (() -> Void)?
     /// Nil while calendars can't be read.
     var newEvent: (() -> Void)?
     /// Nil while reminders can't be read.
@@ -14,14 +17,20 @@ struct PopoverToolbar: View {
 
     var body: some View {
         @Bindable var popover = popover
-        GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 8) {
-                if calendars.remindersAccess == .granted {
-                    TabSwitch(selection: Bindable(store).settings.listTab)
+        HStack(spacing: 8) {
+            if calendars.remindersAccess == .granted {
+                TabSwitch(selection: Bindable(store).settings.listTab)
+            }
+            Spacer(minLength: 0)
+            HStack(spacing: 0) {
+                Button { search?() } label: {
+                    ToolbarIcon(systemImage: "magnifyingglass")
                 }
-                Spacer(minLength: 0)
+                .disabled(search == nil)
+                .keyboardShortcut("f")
+                .help("Search")
                 Button { popover.isPinned.toggle() } label: {
-                    GlassCircle(systemImage: popover.isPinned ? "pin.fill" : "pin", isActive: popover.isPinned)
+                    ToolbarIcon(systemImage: popover.isPinned ? "pin.fill" : "pin", isActive: popover.isPinned)
                 }
                 .help(popover.isPinned ? "Unpin" : "Keep Open")
                 Menu {
@@ -30,7 +39,7 @@ struct PopoverToolbar: View {
                     Button("New Reminder") { newReminder?() }
                         .disabled(newReminder == nil)
                 } label: {
-                    GlassCircle(systemImage: "plus")
+                    ToolbarIcon(systemImage: "plus")
                 }
                 .disabled(newEvent == nil && newReminder == nil)
                 .help("New")
@@ -47,13 +56,16 @@ struct PopoverToolbar: View {
                     Button("Quit Kello") { NSApplication.shared.terminate(nil) }
                         .keyboardShortcut("q")
                 } label: {
-                    GlassCircle(systemImage: "ellipsis")
+                    ToolbarIcon(systemImage: "ellipsis")
                 }
                 .help("More")
             }
             .menuStyle(.button)
             .menuIndicator(.hidden)
-            .buttonStyle(.plain)
+            .buttonStyle(.icon)
+            .padding(1)
+            .glassEffect(.regular, in: .capsule)
+            .glassEdge(Capsule())
         }
         .frame(height: Theme.controlSize + 4)
         // Menu items only answer their shortcuts while the menu is open, so these do it
@@ -62,6 +74,22 @@ struct PopoverToolbar: View {
             Button("", action: openSettings).keyboardShortcut(",").hidden()
             Button("") { NSApplication.shared.terminate(nil) }.keyboardShortcut("q").hidden()
         }
+    }
+}
+
+/// One symbol in the toolbar's capsule, in the accent color while its toggle is on.
+private struct ToolbarIcon: View {
+    let systemImage: String
+    var isActive = false
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary.opacity(isEnabled ? 0.8 : 0.3)))
+            .contentTransition(.symbolEffect(.replace))
+            .frame(width: 30, height: 28)
+            .contentShape(.capsule)
     }
 }
 

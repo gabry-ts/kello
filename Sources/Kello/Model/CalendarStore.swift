@@ -37,6 +37,7 @@ final class CalendarStore {
     @ObservationIgnored private var eventCache: [DateInterval: [CalendarEvent]] = [:]
     @ObservationIgnored private var calendarCache: [CalendarInfo]?
     @ObservationIgnored private var reminderListCache: [CalendarInfo]?
+    @ObservationIgnored private var searchCache: [CalendarEvent]?
 
     init() {
         isLive = true
@@ -73,6 +74,35 @@ final class CalendarStore {
             events = sampleEvents.filter { $0.overlaps(interval) }
         }
         eventCache[interval] = events
+        return events
+    }
+
+    /// Every event occurrence from a year ago to two years ahead, across all calendars, for
+    /// search. That many take a moment, so they're fetched off the main thread, then kept
+    /// until the database changes.
+    func searchableEvents(now: Date) async -> [CalendarEvent] {
+        invalidateIfStale()
+        guard eventsAccess == .granted else { return [] }
+        if let searchCache { return searchCache }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: now)
+        guard let start = calendar.date(byAdding: .year, value: -1, to: today),
+              let end = calendar.date(byAdding: .year, value: 2, to: today) else { return [] }
+        let interval = DateInterval(start: start, end: end)
+        let fetchedRevision = revision
+        let events: [CalendarEvent]
+        if isLive {
+            // EventKit's store is safe to read from any thread; the fetch returns plain values.
+            nonisolated(unsafe) let store = eventStore
+            events = await Task.detached(priority: .userInitiated) {
+                let predicate = store.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
+                return store.events(matching: predicate).map(CalendarEvent.init)
+            }.value
+        } else {
+            events = sampleEvents.filter { $0.overlaps(interval) }
+        }
+        // A change while fetching makes the result stale; it's still returned, not kept.
+        if revision == fetchedRevision && cachedRevision == revision { searchCache = events }
         return events
     }
 
@@ -268,6 +298,7 @@ final class CalendarStore {
         eventCache = [:]
         calendarCache = nil
         reminderListCache = nil
+        searchCache = nil
     }
 
     /// The popover asks for access when events are readable but reminders were never asked

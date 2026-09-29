@@ -34,6 +34,13 @@ final class MonthGridViewModel {
         selectedDay = Calendar.current.startOfDay(for: now)
     }
 
+    /// Selects `date`'s day and flips the grid to its month, sliding the way it lies.
+    func show(_ date: Date) {
+        isMovingForward = date >= referenceDate
+        referenceDate = date
+        selectedDay = Calendar.current.startOfDay(for: date)
+    }
+
     /// Selecting a day of an adjacent month also flips the grid to that month.
     func select(_ day: MonthDay) {
         selectedDay = Calendar.current.startOfDay(for: day.date)
