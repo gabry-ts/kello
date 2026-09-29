@@ -1,7 +1,10 @@
 import SwiftUI
 
-/// About: the icon, name, version and a line about Kello, then a way to support it.
+/// About: the icon, name, version and a line about Kello, then updates and a way to
+/// support it.
 struct AboutView: View {
+    @State private var automaticallyChecksForUpdates = Updater.automaticallyChecksForUpdates
+
     var body: some View {
         Form {
             Section {
@@ -22,6 +25,18 @@ struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
+            }
+            Section {
+                Toggle("Automatically check for updates", isOn: $automaticallyChecksForUpdates)
+                    .onChange(of: automaticallyChecksForUpdates) { _, enabled in
+                        Updater.automaticallyChecksForUpdates = enabled
+                    }
+                Button("Check for Updates…") { Updater.checkForUpdates() }
+            } header: {
+                Text("Updates")
+            } footer: {
+                Text("Kello asks once, the first time it can check, whether to check automatically from then on.")
+                    .foregroundStyle(.secondary)
             }
             Section {
                 VStack(spacing: 10) {

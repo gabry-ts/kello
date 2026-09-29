@@ -39,5 +39,9 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Gabriele Partiti</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/gabry-ts/kello/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>8/E2Im4lX/aBmoIJKT8yWp9sdlpR0TRx8oci+o9cZhM=</string>
 </dict>
 </plist>

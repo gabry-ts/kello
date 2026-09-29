@@ -36,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let isFirstLaunch = !SettingsStore.hasSavedSettings
         store.saveNow()
+        _ = Updater.controller
 
         statusItem = StatusItemController(state: popoverState) { [store, calendars, popoverState] in
             AnyView(

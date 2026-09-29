@@ -344,6 +344,16 @@
         }
       }
     },
+    "Automatically check for updates" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla automaticamente gli aggiornamenti"
+          }
+        }
+      }
+    },
     "Back" : {
       "localizations" : {
         "it" : {
@@ -410,6 +420,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annulla"
+          }
+        }
+      }
+    },
+    "Check for Updates…" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla aggiornamenti…"
           }
         }
       }
@@ -830,6 +850,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mantieni aperto"
+          }
+        }
+      }
+    },
+    "Kello asks once, the first time it can check, whether to check automatically from then on." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kello lo chiede una sola volta, alla prima verifica possibile, se controllare automaticamente da quel momento in poi."
           }
         }
       }
@@ -1630,6 +1660,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Non mantenere aperto"
+          }
+        }
+      }
+    },
+    "Updates" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornamenti"
           }
         }
       }
