@@ -18,11 +18,18 @@ enum Snapshots {
         weekNumbers.showWeekNumbers = true
         let weekNumbersStore = SettingsStore(settings: weekNumbers)
 
+        let calendars = CalendarStore(eventsAccess: .granted, remindersAccess: .granted)
+        let unasked = CalendarStore(eventsAccess: .notDetermined, remindersAccess: .notDetermined)
+        let denied = CalendarStore(eventsAccess: .granted, remindersAccess: .denied)
+        let deniedEvents = CalendarStore(eventsAccess: .denied, remindersAccess: .notDetermined)
+
         for dark in [false, true] {
             let suffix = dark ? "dark" : "light"
-            snapPopover(MenuContent(openSettings: {}).environment(store), name: "popover-\(suffix)", dark: dark, dir: dir)
+            snapPopover(MenuContent(openSettings: {}).environment(store).environment(calendars), name: "popover-\(suffix)", dark: dark, dir: dir)
+            snapPopover(MenuContent(openSettings: {}).environment(store).environment(unasked), name: "permission-\(suffix)", dark: dark, dir: dir)
         }
-        snapPopover(MenuContent(openSettings: {}).environment(weekNumbersStore), name: "popover-weeknumbers-light", dark: false, dir: dir)
+        snapPopover(MenuContent(openSettings: {}).environment(store).environment(deniedEvents), name: "permission-denied-light", dark: false, dir: dir)
+        snapPopover(MenuContent(openSettings: {}).environment(weekNumbersStore).environment(denied), name: "popover-weeknumbers-light", dark: false, dir: dir)
         print("Snapshots written to \(dir.path)")
         return 0
     }

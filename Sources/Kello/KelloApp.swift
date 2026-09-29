@@ -25,6 +25,7 @@ struct KelloApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let store = SettingsStore()
+    let calendars = CalendarStore()
     private let navigation = Navigation()
     private var window: NSWindow?
     private var statusItem: StatusItemController?
@@ -32,17 +33,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         store.saveNow()
 
-        statusItem = StatusItemController { [store] in
+        statusItem = StatusItemController { [store, calendars] in
             AnyView(
                 MenuContent(openSettings: { [weak self] in
                     self?.statusItem?.closePopover()
                     self?.openSettingsWindow()
                 })
                 .environment(store)
+                .environment(calendars)
             )
         } render: { [store] in
             MenuBarFormat.string(for: .now, settings: store.settings.menuBar)
         }
+
+        Task { await calendars.requestAccessIfNeeded() }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
