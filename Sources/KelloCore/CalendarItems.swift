@@ -40,6 +40,31 @@ public struct CalendarInfo: Hashable, Sendable, Identifiable {
     }
 }
 
+/// The calendars of one account, for lists grouped by source.
+public struct CalendarGroup: Hashable, Sendable, Identifiable {
+    public var id: String { sourceTitle }
+    public let sourceTitle: String
+    public let calendars: [CalendarInfo]
+
+    public init(sourceTitle: String, calendars: [CalendarInfo]) {
+        self.sourceTitle = sourceTitle
+        self.calendars = calendars
+    }
+
+    /// Groups in display order, one per account.
+    public static func grouped(_ calendars: [CalendarInfo]) -> [CalendarGroup] {
+        var groups: [CalendarGroup] = []
+        for calendar in CalendarInfo.sortedForDisplay(calendars) {
+            if let last = groups.last, last.sourceTitle == calendar.sourceTitle {
+                groups[groups.count - 1] = CalendarGroup(sourceTitle: last.sourceTitle, calendars: last.calendars + [calendar])
+            } else {
+                groups.append(CalendarGroup(sourceTitle: calendar.sourceTitle, calendars: [calendar]))
+            }
+        }
+        return groups
+    }
+}
+
 /// One occurrence of a calendar event, free of EventKit types.
 public struct CalendarEvent: Hashable, Sendable, Identifiable {
     /// Unique per occurrence, since every occurrence of a recurring event shares

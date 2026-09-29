@@ -22,6 +22,7 @@ struct PopoverToolbar: View {
                 Image(systemName: store.settings.agendaMode == .day ? "list.bullet" : "list.bullet.indent")
             }
             .help(store.settings.agendaMode == .day ? "Show Upcoming" : "Show Selected Day")
+            CalendarVisibilityMenu()
             Menu {
                 Button("Settings…", action: openSettings)
                     .keyboardShortcut(",")

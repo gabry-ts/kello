@@ -157,3 +157,15 @@ final class AgendaTests: XCTestCase {
 private extension String {
     func prefixed(_ prefix: String) -> String { prefix + self }
 }
+
+final class CalendarGroupTests: XCTestCase {
+    func testGroupsBySourceInDisplayOrder() {
+        let color = ItemColor(red: 0, green: 0, blue: 0)
+        func info(_ title: String, _ source: String) -> CalendarInfo {
+            CalendarInfo(id: title, title: title, sourceTitle: source, color: color, isWritable: true)
+        }
+        let groups = CalendarGroup.grouped([info("Work", "iCloud"), info("Team", "Google"), info("Home", "iCloud"), info("Birthdays", "Other")])
+        XCTAssertEqual(groups.map(\.sourceTitle), ["Google", "iCloud", "Other"])
+        XCTAssertEqual(groups[1].calendars.map(\.title), ["Home", "Work"])
+    }
+}

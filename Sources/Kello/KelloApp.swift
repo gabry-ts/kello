@@ -76,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         let view = SettingsView(navigation: navigation)
             .environment(store)
+            .environment(calendars)
         let window = makeWindow(view, size: NSSize(width: 640, height: 420), minSize: NSSize(width: 560, height: 360))
         self.window = window
         window.makeKeyAndOrderFront(nil)

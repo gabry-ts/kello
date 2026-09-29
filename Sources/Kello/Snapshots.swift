@@ -32,6 +32,11 @@ enum Snapshots {
         }
         snapPopover(popover(store, deniedEvents), name: "permission-denied-light", dark: false, dir: dir)
         snapPopover(popover(weekNumbersStore, denied), name: "popover-weeknumbers-light", dark: false, dir: dir)
+        var hidden = Settings()
+        hidden.hiddenCalendarIDs = ["work"]
+        snapPopover(popover(SettingsStore(settings: hidden), calendars), name: "popover-hidden-work-light", dark: false, dir: dir)
+        snapWindow(SettingsView(navigation: Navigation(pane: .calendars)).environment(SettingsStore(settings: hidden)).environment(calendars),
+                   name: "settings-calendars-light", dark: false, dir: dir)
         print("Snapshots written to \(dir.path)")
         return 0
     }
@@ -87,6 +92,26 @@ enum Snapshots {
         window.setContentSize(controller.view.fittingSize)
         // Off the visible displays, so nothing flashes on screen; the window server can
         // still composite and capture a window regardless of where it's positioned.
+        window.setFrameOrigin(NSPoint(x: -6000, y: -6000))
+        window.orderFrontRegardless()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.8))
+        if let image = windowImage(window), let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
+            try? data.write(to: dir.appendingPathComponent("\(name).png"))
+            print("  \(name).png")
+        }
+        window.orderOut(nil)
+        window.close()
+    }
+
+    private static func snapWindow(_ view: some View, name: String, dark: Bool, dir: URL) {
+        let controller = NSHostingController(rootView: view)
+        controller.sceneBridgingOptions = [.toolbars]
+        let window = NSWindow(contentViewController: controller)
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        window.setContentSize(NSSize(width: 640, height: 460))
         window.setFrameOrigin(NSPoint(x: -6000, y: -6000))
         window.orderFrontRegardless()
         RunLoop.main.run(until: Date().addingTimeInterval(0.8))

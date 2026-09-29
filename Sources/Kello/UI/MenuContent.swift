@@ -47,10 +47,12 @@ struct MenuContent: View {
         }
     }
 
-    /// The events touching any of `days`, a contiguous run of dates.
+    /// The events of visible calendars touching any of `days`, a contiguous run of dates.
     private func events(in days: [Date]) -> [CalendarEvent] {
         guard let first = days.min(), let last = days.max(),
               let end = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: last)) else { return [] }
+        let hidden = store.settings.hiddenCalendarIDs
         return calendars.events(in: DateInterval(start: calendar.startOfDay(for: first), end: end))
+            .filter { !hidden.contains($0.calendarID) }
     }
 }
