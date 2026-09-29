@@ -51,6 +51,8 @@ struct MonthGridView: View {
     @Bindable var viewModel: MonthGridViewModel
     /// Up to four calendar colors per day (keyed by start of day), drawn as dots.
     var dots: [Date: [Color]] = [:]
+    /// Double clicking a day creates an event on it; nil turns it off.
+    var onDoubleClick: ((Date) -> Void)?
 
     static let rowHeight: CGFloat = 34
     private static let weekNumberWidth: CGFloat = 20
@@ -142,6 +144,9 @@ struct MonthGridView: View {
                                 dots: dots[calendar.startOfDay(for: day.date)] ?? []
                             )
                             .onTapGesture { viewModel.select(day) }
+                            // Simultaneous, so the first click still selects right away
+                            // instead of waiting out the double-click interval.
+                            .simultaneousGesture(TapGesture(count: 2).onEnded { onDoubleClick?(day.date) })
                         }
                     }
                 }

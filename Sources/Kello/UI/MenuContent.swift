@@ -49,12 +49,15 @@ struct MenuContent: View {
         let sections = Agenda.sections(days: agendaDays, events: events(in: agendaDays), reminders: [], now: now)
 
         return VStack(alignment: .leading, spacing: 8) {
-            MonthGridView(viewModel: viewModel, dots: AgendaFormat.dotColors(days: gridDays, events: gridEvents).mapValues { $0.map(Color.init) })
+            MonthGridView(
+                viewModel: viewModel,
+                dots: AgendaFormat.dotColors(days: gridDays, events: gridEvents).mapValues { $0.map(Color.init) },
+                onDoubleClick: calendars.eventsAccess == .granted ? { newEvent(on: $0, now: now) } : nil)
             if calendars.needsPermissionPrompt {
                 Divider()
                 PermissionView()
             }
-            PopoverToolbar(openSettings: openSettings, newEvent: calendars.eventsAccess == .granted ? { newEvent(now: now) } : nil)
+            PopoverToolbar(openSettings: openSettings, newEvent: calendars.eventsAccess == .granted ? { newEvent(on: viewModel.selectedDay, now: now) } : nil)
             if calendars.eventsAccess == .granted {
                 StatusRow(status: AgendaStatus(events: todayEvents, reminders: [], now: now), showsOverdue: false)
                 AgendaView(sections: sections, now: now) { event in
@@ -72,9 +75,9 @@ struct MenuContent: View {
         }
     }
 
-    private func newEvent(now: Date) {
+    private func newEvent(on day: Date, now: Date) {
         let calendarID = calendars.defaultCalendarID(hidden: store.settings.hiddenCalendarIDs)
-        route = .event(EventDraft.new(on: viewModel.selectedDay, now: now, calendarID: calendarID))
+        route = .event(EventDraft.new(on: day, now: now, calendarID: calendarID))
     }
 
     /// The events of visible calendars touching any of `days`, a contiguous run of dates.
