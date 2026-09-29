@@ -39,6 +39,8 @@ enum Theme {
     /// The Join button: a bright call-to-action blue that reads on any calendar tint.
     static let join = Color(red: 0.04, green: 0.52, blue: 0.90)
     static let destructive = Color.red
+    /// Holiday day numbers in the grid and the holiday label above a day's agenda.
+    static let holiday = Color.red
 
     /// A color made a touch deeper in light mode, so pale calendar colors still read as text.
     static func legible(_ color: Color, _ scheme: ColorScheme) -> Color {

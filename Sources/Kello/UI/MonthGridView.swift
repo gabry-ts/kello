@@ -52,6 +52,8 @@ struct MonthGridView: View {
     @Bindable var viewModel: MonthGridViewModel
     /// Up to four calendar colors per day (keyed by start of day), drawn as dots.
     var dots: [Date: [Color]] = [:]
+    /// Days with a holiday (as start of day), whose numbers are drawn in red.
+    var holidays: Set<Date> = []
     /// Double clicking a day creates an event on it; nil turns it off.
     var onDoubleClick: ((Date) -> Void)?
 
@@ -170,6 +172,7 @@ struct MonthGridView: View {
                                 isToday: calendar.isDateInToday(day.date),
                                 isWeekend: calendar.isDateInWeekend(day.date),
                                 isSelected: calendar.isDate(viewModel.selectedDay, inSameDayAs: day.date),
+                                isHoliday: holidays.contains(calendar.startOfDay(for: day.date)),
                                 dots: dots[calendar.startOfDay(for: day.date)] ?? []
                             )
                             .onTapGesture { viewModel.select(day) }
@@ -184,13 +187,14 @@ struct MonthGridView: View {
     }
 }
 
-/// One day: its number in a circle (filled for today, ringed when selected), the event
-/// dots under it, and a hover state.
+/// One day: its number in a circle (filled for today, ringed when selected), red on
+/// holidays, the event dots under it, and a hover state.
 private struct DayCell: View {
     let day: MonthDay
     let isToday: Bool
     let isWeekend: Bool
     let isSelected: Bool
+    let isHoliday: Bool
     let dots: [Color]
     @Environment(\.colorScheme) private var colorScheme
     @State private var isHovered = false
@@ -198,7 +202,7 @@ private struct DayCell: View {
     var body: some View {
         VStack(spacing: 3) {
             Text("\(day.day)")
-                .font(.system(size: 13, weight: isToday ? .semibold : .regular))
+                .font(.system(size: 13, weight: isToday ? .semibold : (isHoliday && day.isInCurrentMonth ? .medium : .regular)))
                 .monospacedDigit()
                 .foregroundStyle(numberStyle)
                 .frame(width: Theme.dayCircle, height: Theme.dayCircle)
@@ -224,6 +228,7 @@ private struct DayCell: View {
 
     private var numberStyle: AnyShapeStyle {
         if isToday { return AnyShapeStyle(.white) }
+        if isHoliday { return AnyShapeStyle(Theme.holiday.opacity(day.isInCurrentMonth ? 1 : 0.35)) }
         if !day.isInCurrentMonth { return AnyShapeStyle(.quaternary) }
         if isSelected { return AnyShapeStyle(.tint) }
         return isWeekend ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary)

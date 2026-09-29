@@ -2,7 +2,8 @@ import KelloCore
 import SwiftUI
 
 /// The scrolling list under the grid: an optional "Next up" card, then sections with a
-/// header, then their reminders (grouped in one card), events and the "now" marker. Grows
+/// header and the day's holidays, then their reminders (grouped in one card), events and
+/// the "now" marker. Grows
 /// with its content up to `maxHeight`, then scrolls, fading out at the bottom.
 struct AgendaView: View {
     let sections: [AgendaSection]
@@ -33,6 +34,10 @@ struct AgendaView: View {
                             detail: Self.detail(section),
                             badge: section.title == Agenda.overdueTitle ? section.entries.count : nil,
                             isFirst: index == 0 && nextUp == nil)
+                        if !section.holidays.isEmpty {
+                            HolidayLabels(names: section.holidays)
+                                .padding(.bottom, section.entries.isEmpty ? 0 : 8)
+                        }
                         VStack(spacing: Theme.rowSpacing) {
                             ForEach(Self.blocks(section.entries)) { block in
                                 blockView(block)
@@ -153,6 +158,33 @@ struct SectionHeader: View {
         .padding(.horizontal, 4)
         .padding(.top, isFirst ? 2 : 14)
         .padding(.bottom, 8)
+    }
+}
+
+/// A day's holidays under its header: small red capsules, one per holiday.
+struct HolidayLabels: View {
+    let names: [String]
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(names, id: \.self) { name in
+                HStack(spacing: 5) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 8.5, weight: .bold))
+                    Text(name)
+                        .font(.system(size: 11.5, weight: .semibold))
+                        .lineLimit(1)
+                }
+                .foregroundStyle(Theme.legible(Theme.holiday, colorScheme))
+                .padding(.horizontal, 8)
+                .frame(height: 20)
+                .background(Theme.holiday.opacity(colorScheme == .dark ? 0.18 : 0.11), in: .capsule)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Holiday: \(name)")
+            }
+        }
+        .padding(.horizontal, 2)
     }
 }
 

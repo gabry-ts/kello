@@ -19,7 +19,8 @@ extension CalendarInfo {
             title: calendar.title,
             sourceTitle: calendar.source?.title ?? String(localized: "Other"),
             color: ItemColor(calendar.cgColor),
-            isWritable: calendar.allowsContentModifications
+            isWritable: calendar.allowsContentModifications,
+            isSubscribed: calendar.type == .subscription || calendar.isSubscribed
         )
     }
 }

@@ -21,13 +21,16 @@ public struct CalendarInfo: Hashable, Sendable, Identifiable {
     public let sourceTitle: String
     public let color: ItemColor
     public let isWritable: Bool
+    /// A calendar subscribed to from a URL, like the built-in holidays one.
+    public let isSubscribed: Bool
 
-    public init(id: String, title: String, sourceTitle: String, color: ItemColor, isWritable: Bool) {
+    public init(id: String, title: String, sourceTitle: String, color: ItemColor, isWritable: Bool, isSubscribed: Bool = false) {
         self.id = id
         self.title = title
         self.sourceTitle = sourceTitle
         self.color = color
         self.isWritable = isWritable
+        self.isSubscribed = isSubscribed
     }
 
     /// Sorted by account, then title, the way Calendar.app lists them.

@@ -22,10 +22,13 @@ public struct AgendaSection: Hashable, Sendable, Identifiable {
     public var id: String { title }
     public let title: String
     public let entries: [AgendaEntry]
+    /// The names of the day's holidays, shown under the header.
+    public let holidays: [String]
 
-    public init(title: String, entries: [AgendaEntry]) {
+    public init(title: String, entries: [AgendaEntry], holidays: [String] = []) {
         self.title = title
         self.entries = entries
+        self.holidays = holidays
     }
 }
 
@@ -54,12 +57,13 @@ public enum Agenda {
 
     /// Builds the list. Overdue reminders come first, in one section, but only when today
     /// is among `days`; then one section per day with reminders due that day, all-day
-    /// events, and timed events in start order. Today's section gets
-    /// a "now" marker. Days with nothing on them are left out.
+    /// events, and timed events in start order, under the names of the day's `holidays`.
+    /// Today's section gets a "now" marker. Days with nothing on them are left out.
     public static func sections(
         days: [Date],
         events: [CalendarEvent],
         reminders: [ReminderItem],
+        holidays: [CalendarEvent] = [],
         now: Date,
         calendar: Calendar = .current,
         locale: Locale = .current
@@ -99,9 +103,10 @@ public enum Agenda {
                 entries += timed.map(AgendaEntry.event)
             }
 
-            guard !entries.isEmpty else { continue }
+            let holidayNames = Holidays.names(in: interval, holidays: holidays)
+            guard !entries.isEmpty || !holidayNames.isEmpty else { continue }
             let title = sectionTitle(for: day, now: now, calendar: calendar, locale: locale)
-            sections.append(AgendaSection(title: title, entries: entries))
+            sections.append(AgendaSection(title: title, entries: entries, holidays: holidayNames))
         }
         return sections
     }

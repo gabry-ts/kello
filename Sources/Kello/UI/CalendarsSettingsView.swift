@@ -1,9 +1,10 @@
 import KelloCore
 import SwiftUI
 
-/// Calendars settings: every calendar and reminder list, grouped by account, with a
-/// toggle to show or hide it in the popover.
+/// Calendars settings: the holidays calendar, then every calendar and reminder list,
+/// grouped by account, with a toggle to show or hide it in the popover.
 struct CalendarsSettingsView: View {
+    @Environment(SettingsStore.self) private var store
     @Environment(CalendarStore.self) private var calendars
 
     var body: some View {
@@ -15,6 +16,15 @@ struct CalendarsSettingsView: View {
                         .foregroundStyle(.secondary)
                     Button("Open Privacy Settings…") { calendars.openPrivacySettings(for: .event) }
                         .buttonStyle(.glass)
+                }
+            } else {
+                Section {
+                    holidayPicker
+                } header: {
+                    Text("Holidays")
+                } footer: {
+                    Text("Days with an event in this calendar get a red number in the grid, and the holiday's name shows above that day's agenda.")
+                        .foregroundStyle(.secondary)
                 }
             }
             // Calendars and reminder lists can share an account name, so each section is
@@ -28,6 +38,25 @@ struct CalendarsSettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// Shows the automatic pick until one is chosen; choosing "None" turns holidays off.
+    private var holidayPicker: some View {
+        let all = calendars.eventCalendars
+        let selection = Binding<String>(
+            get: { store.settings.holidayCalendar.resolvedID(among: all) ?? "" },
+            set: { store.settings.holidayCalendar = $0.isEmpty ? .none : .calendar($0) })
+        return Picker("Holidays calendar", selection: selection) {
+            Text("None").tag("")
+            ForEach(CalendarGroup.grouped(all)) { group in
+                Section(group.sourceTitle) {
+                    ForEach(group.calendars) { calendar in
+                        Label { Text(calendar.title) } icon: { Image(nsImage: .swatch(calendar.color)) }
+                            .tag(calendar.id)
+                    }
+                }
+            }
+        }
     }
 
     private var sections: [(id: String, title: String, calendars: [CalendarInfo])] {

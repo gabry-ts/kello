@@ -49,6 +49,7 @@ struct MenuContent: View {
             firstWeekday: settings.firstWeekday)
         let gridDays = grid.weeks.flatMap(\.days).map(\.date)
         let gridEvents = events(in: gridDays)
+        let holidayCalendarID = settings.holidayCalendar.resolvedID(among: calendars.eventCalendars)
         let todayEvents = events(in: [now])
         let reminders = visibleReminders
         let canReadEvents = calendars.eventsAccess == .granted
@@ -58,6 +59,7 @@ struct MenuContent: View {
             MonthGridView(
                 viewModel: viewModel,
                 dots: AgendaFormat.dotColors(days: gridDays, events: gridEvents).mapValues { $0.map(Color.init) },
+                holidays: Holidays.days(gridDays, holidays: holidays(in: gridDays, calendarID: holidayCalendarID)),
                 onDoubleClick: canReadEvents ? { newEvent(on: $0, now: now) } : nil)
             if calendars.needsPermissionPrompt {
                 PermissionView()
@@ -83,7 +85,8 @@ struct MenuContent: View {
                 let agendaDays = Agenda.days(mode: settings.agendaMode, selectedDay: viewModel.selectedDay, now: now)
                 let showsToday = agendaDays.contains { calendar.isDate($0, inSameDayAs: now) }
                 AgendaView(
-                    sections: Agenda.sections(days: agendaDays, events: events(in: agendaDays), reminders: [], now: now),
+                    sections: Agenda.sections(days: agendaDays, events: events(in: agendaDays), reminders: [],
+                                              holidays: holidays(in: agendaDays, calendarID: holidayCalendarID), now: now),
                     now: now,
                     nextUp: showsToday ? Agenda.nextUp(events: todayEvents, now: now) : nil,
                     openEvent: { event in
@@ -124,12 +127,23 @@ struct MenuContent: View {
     }
 
     /// The events of visible calendars touching any of `days`, a contiguous run of dates.
+    /// The holidays calendar's are left out, since they're shown as holidays instead.
     private func events(in days: [Date]) -> [CalendarEvent] {
+        let hidden = store.settings.hiddenCalendarIDs
+        let holidayCalendarID = store.settings.holidayCalendar.resolvedID(among: calendars.eventCalendars)
+        return allEvents(in: days).filter { !hidden.contains($0.calendarID) && $0.calendarID != holidayCalendarID }
+    }
+
+    /// The holidays touching any of `days`, shown whether or not their calendar is hidden.
+    private func holidays(in days: [Date], calendarID: String?) -> [CalendarEvent] {
+        guard let calendarID else { return [] }
+        return allEvents(in: days).filter { $0.calendarID == calendarID }
+    }
+
+    private func allEvents(in days: [Date]) -> [CalendarEvent] {
         guard let first = days.min(), let last = days.max(),
               let end = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: last)) else { return [] }
-        let hidden = store.settings.hiddenCalendarIDs
         return calendars.events(in: DateInterval(start: calendar.startOfDay(for: first), end: end))
-            .filter { !hidden.contains($0.calendarID) }
     }
 }
 

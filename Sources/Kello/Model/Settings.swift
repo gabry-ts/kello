@@ -16,6 +16,9 @@ struct Settings: Codable, Hashable {
     var listTab = ListTab.agenda
     /// Calendars and reminder lists left out of the dots, the list and the counts.
     var hiddenCalendarIDs: Set<String> = []
+    /// Whose events mark days as holidays in the grid, shown by name above that day's
+    /// agenda instead of as events.
+    var holidayCalendar = HolidayCalendarChoice.automatic
 
     init() {}
 
@@ -29,6 +32,7 @@ struct Settings: Codable, Hashable {
         agendaMode = try c.decodeIfPresent(AgendaMode.self, forKey: .agendaMode) ?? d.agendaMode
         listTab = try c.decodeIfPresent(ListTab.self, forKey: .listTab) ?? d.listTab
         hiddenCalendarIDs = try c.decodeIfPresent(Set<String>.self, forKey: .hiddenCalendarIDs) ?? d.hiddenCalendarIDs
+        holidayCalendar = try c.decodeIfPresent(HolidayCalendarChoice.self, forKey: .holidayCalendar) ?? d.holidayCalendar
     }
 
     func isCalendarVisible(_ id: String) -> Bool {

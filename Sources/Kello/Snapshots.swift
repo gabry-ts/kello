@@ -212,7 +212,8 @@ private enum SampleData {
         CalendarInfo(id: "work", title: "Work", sourceTitle: "iCloud", color: ItemColor(red: 0.2, green: 0.5, blue: 1), isWritable: true),
         CalendarInfo(id: "home", title: "Home", sourceTitle: "iCloud", color: ItemColor(red: 0.95, green: 0.35, blue: 0.3), isWritable: true),
         CalendarInfo(id: "gym", title: "Training", sourceTitle: "Google", color: ItemColor(red: 0.2, green: 0.75, blue: 0.4), isWritable: true),
-        CalendarInfo(id: "holidays", title: "Holidays", sourceTitle: "Other", color: ItemColor(red: 0.6, green: 0.4, blue: 0.9), isWritable: false),
+        CalendarInfo(id: "holidays", title: "Holidays", sourceTitle: "Other", color: ItemColor(red: 0.6, green: 0.4, blue: 0.9), isWritable: false,
+                     isSubscribed: true),
     ]
 
     static let lists = [
@@ -263,8 +264,8 @@ private enum SampleData {
         for offset in [-9, -6, -2, 4, 8, 11, 15, 18] {
             events.append(event("Standup", "work", at(offset, 9), at(offset, 9, 15), recurring: true))
         }
-        for offset in [-5, 5, 12] {
-            events.append(event("Holiday", "holidays", at(offset, 0), at(offset + 1, 0), allDay: true))
+        for (offset, name) in [(-5, "Harvest Day"), (0, "Founders' Day"), (12, "Autumn Bank Holiday")] {
+            events.append(event(name, "holidays", at(offset, 0), at(offset + 1, 0), allDay: true))
         }
         return events
     }
