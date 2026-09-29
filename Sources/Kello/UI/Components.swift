@@ -12,7 +12,7 @@ struct GlassCircle: View {
 
     var body: some View {
         Image(systemName: systemImage)
-            .font(.system(size: 13, weight: .medium))
+            .font(.system(size: 11, weight: .medium))
             .foregroundStyle(isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary.opacity(isEnabled ? 0.8 : 0.3)))
             .contentTransition(.symbolEffect(.replace))
             .frame(width: size, height: size)
@@ -30,7 +30,7 @@ struct GlassCircle: View {
 /// A plain SF Symbol button with a soft round highlight on hover and press, for places
 /// inside a glass control where another glass layer would be too much.
 struct IconButtonStyle: ButtonStyle {
-    var size: CGFloat = 28
+    var size: CGFloat = 20
 
     func makeBody(configuration: Configuration) -> some View {
         IconButtonBody(configuration: configuration, size: size)
@@ -44,7 +44,7 @@ struct IconButtonStyle: ButtonStyle {
 
         var body: some View {
             configuration.label
-                .font(.system(size: 11, weight: .bold))
+                .font(.system(size: 9.5, weight: .bold))
                 .foregroundStyle(.primary.opacity(isEnabled ? 0.8 : 0.3))
                 .frame(minWidth: size, minHeight: size)
                 .background {

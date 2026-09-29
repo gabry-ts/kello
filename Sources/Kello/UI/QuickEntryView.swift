@@ -47,9 +47,9 @@ struct QuickEntryView: View {
     private func preview(_ entry: QuickEntry) -> some View {
         VStack(spacing: Theme.rowSpacing + 4) {
             FormCard {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(entry.title.isEmpty ? String(localized: "New Event") : entry.title)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(entry.title.isEmpty ? .secondary : .primary)
                         .lineLimit(2)
                     detail("calendar", Self.dayText(entry))
@@ -58,8 +58,8 @@ struct QuickEntryView: View {
                         : AgendaFormat.timeText(start: entry.start, end: entry.end, isAllDay: false, showsTimeZone: false))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                Hairline(leading: 12)
+                .padding(10)
+                Hairline(leading: 10)
                 FormRow("Calendar") { CalendarPicker(calendarID: $calendarID) }
             }
             HStack(spacing: 6) {
@@ -71,19 +71,19 @@ struct QuickEntryView: View {
                     .buttonBorderShape(.capsule)
                     .controlSize(.small)
             }
-            .font(.system(size: 12))
-            .padding(.horizontal, 4)
+            .font(.system(size: 11))
+            .padding(.horizontal, 3)
         }
     }
 
     private func detail(_ systemImage: String, _ text: String) -> some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 6) {
             Image(systemName: systemImage)
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(calendarColor)
-                .frame(width: 14)
+                .frame(width: 12)
             Text(text)
-                .font(.system(size: 12.5))
+                .font(.system(size: 11.5))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
         }
@@ -91,7 +91,7 @@ struct QuickEntryView: View {
 
     /// A few lines to type, while the field is empty.
     private var examples: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 5) {
             Text("Type what and when, for example:")
                 .foregroundStyle(.secondary)
             // Localized along with the parser's own words, so each language's examples parse.
@@ -108,17 +108,17 @@ struct QuickEntryView: View {
                 .buttonStyle(.plain)
             }
         }
-        .font(.system(size: 12.5))
+        .font(.system(size: 11.5))
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
+        .padding(10)
         .surface(radius: Theme.groupRadius, elevated: false)
     }
 
     private struct ExampleLabelStyle: LabelStyle {
         func makeBody(configuration: Configuration) -> some View {
-            HStack(spacing: 7) {
+            HStack(spacing: 6) {
                 configuration.icon
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(.tertiary)
                 configuration.title
                     .foregroundStyle(.primary)
@@ -187,17 +187,17 @@ struct QuickEntryField: View {
     @State private var text = ""
 
     var body: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: 7) {
             Image(systemName: "wand.and.stars")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.tint)
-                .frame(width: 16)
+                .frame(width: 14)
             TextField("Quick entry, like “Lunch friday 1pm”", text: $text)
                 .textFieldStyle(.plain)
-                .font(.system(size: 13))
+                .font(.system(size: 11.5))
         }
-        .padding(.horizontal, 12)
-        .frame(height: 36)
+        .padding(.horizontal, 10)
+        .frame(height: 30)
         .surface(radius: Theme.groupRadius, tint: .accentColor, tintAmount: 0.5, elevated: false)
         .onChange(of: text) {
             guard let entry = QuickEntryParser.parse(text, now: .now) else { return }

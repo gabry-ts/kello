@@ -19,7 +19,7 @@ struct PopoverToolbar: View {
 
     var body: some View {
         @Bindable var popover = popover
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             if calendars.remindersAccess == .granted {
                 TabSwitch(selection: Bindable(store).settings.listTab)
             }
@@ -73,7 +73,7 @@ struct PopoverToolbar: View {
             .glassEffect(.regular, in: .capsule)
             .glassEdge(Capsule())
         }
-        .frame(height: Theme.controlSize + 4)
+        .frame(height: Theme.controlSize + 2)
         // Menu items only answer their shortcuts while the menu is open, so these do it
         // for the popover as a whole.
         .background {
@@ -91,10 +91,10 @@ private struct ToolbarIcon: View {
 
     var body: some View {
         Image(systemName: systemImage)
-            .font(.system(size: 13, weight: .medium))
+            .font(.system(size: 11, weight: .medium))
             .foregroundStyle(isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary.opacity(isEnabled ? 0.8 : 0.3)))
             .contentTransition(.symbolEffect(.replace))
-            .frame(width: 30, height: 28)
+            .frame(width: 23, height: 20)
             .contentShape(.capsule)
     }
 }
@@ -107,11 +107,11 @@ private struct TabSwitch: View {
     @Namespace private var namespace
 
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 1) {
             segment("Agenda", tab: .agenda)
             segment("Reminders", tab: .reminders)
         }
-        .padding(3)
+        .padding(2)
         // Only the selection capsule slides; the list below swaps without morphing rows.
         .animation(Theme.spring(reduceMotion), value: selection)
         .glassEffect(.regular, in: .capsule)
@@ -124,16 +124,16 @@ private struct TabSwitch: View {
             selection = tab
         } label: {
             Text(title)
-                .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
                 .foregroundStyle(isSelected ? .primary : .secondary)
                 .fixedSize()
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 9)
                 .frame(height: Theme.segmentHeight)
                 .background {
                     if isSelected {
                         Capsule()
                             .fill(colorScheme == .dark ? Color.white.opacity(0.16) : Color.white)
-                            .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.10), radius: 3, y: 1)
+                            .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.10), radius: 2, y: 0.5)
                             .matchedGeometryEffect(id: "selection", in: namespace)
                     }
                 }
@@ -151,7 +151,7 @@ struct StatusRow: View {
     let showsOverdue: Bool
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             if showsOverdue {
                 chip(count: status.overdueCount, label: "overdue", colors: status.overdueCount > 0 ? [.red] : [])
             }
@@ -161,24 +161,24 @@ struct StatusRow: View {
     }
 
     private func chip(count: Int, label: LocalizedStringKey, colors: [Color]) -> some View {
-        HStack(spacing: 6) {
-            HStack(spacing: 2) {
+        HStack(spacing: 5) {
+            HStack(spacing: 1.5) {
                 ForEach(Array((colors.isEmpty ? [.secondary.opacity(0.35)] : colors).enumerated()), id: \.offset) { _, color in
-                    Capsule().fill(color).frame(width: 3, height: 10)
+                    Capsule().fill(color).frame(width: 2.5, height: 8)
                 }
             }
             HStack(spacing: 3) {
                 Text("\(count)")
-                    .font(.system(size: 11.5, weight: .semibold))
+                    .font(.system(size: 10.5, weight: .semibold))
                     .monospacedDigit()
                     .foregroundStyle(.primary)
                 Text(label)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 9)
-        .frame(height: 22)
-        .surface(radius: 11, elevated: false)
+        .padding(.horizontal, 7)
+        .frame(height: 18)
+        .surface(radius: 9, elevated: false)
     }
 }

@@ -30,7 +30,7 @@ struct AgendaView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if let nextUp {
                         NextUpCard(event: nextUp, now: now) { openEvent(nextUp) }
-                            .padding(.bottom, 4)
+                            .padding(.bottom, 3)
                     }
                     ForEach(Array(sections.enumerated()), id: \.element.id) { index, section in
                         SectionHeader(
@@ -40,7 +40,7 @@ struct AgendaView: View {
                             isFirst: index == 0 && nextUp == nil)
                         if !section.holidays.isEmpty {
                             HolidayLabels(names: section.holidays)
-                                .padding(.bottom, section.entries.isEmpty ? 0 : 8)
+                                .padding(.bottom, section.entries.isEmpty ? 0 : 5)
                         }
                         VStack(spacing: Theme.rowSpacing) {
                             ForEach(Self.blocks(section.entries)) { block in
@@ -49,7 +49,7 @@ struct AgendaView: View {
                         }
                     }
                 }
-                .padding(.bottom, scrolls ? 24 : 2)
+                .padding(.bottom, scrolls ? 20 : 2)
                 // Room for the cards' shadows, which the scroll view would otherwise clip.
                 .padding(.horizontal, 4)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
@@ -62,7 +62,7 @@ struct AgendaView: View {
                 VStack(spacing: 0) {
                     Rectangle()
                     LinearGradient(colors: [.black, .black.opacity(scrolls ? 0 : 1)], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 36)
+                        .frame(height: 28)
                 }
             }
         }
@@ -139,29 +139,29 @@ struct SectionHeader: View {
     var isFirst = false
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 11, weight: .semibold))
             if let badge {
                 Text("\(badge)")
-                    .font(.system(size: 10.5, weight: .bold))
+                    .font(.system(size: 9, weight: .bold))
                     .monospacedDigit()
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 5)
-                    .frame(minWidth: 17, minHeight: 17)
+                    .padding(.horizontal, 4)
+                    .frame(minWidth: 14, minHeight: 14)
                     .background(Theme.destructive, in: .capsule)
             }
             Spacer()
             if let detail {
                 Text(detail)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: 10))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 4)
-        .padding(.top, isFirst ? 2 : 14)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 3)
+        .padding(.top, isFirst ? 2 : 10)
+        .padding(.bottom, 5)
     }
 }
 
@@ -171,18 +171,18 @@ struct HolidayLabels: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             ForEach(names, id: \.self) { name in
-                HStack(spacing: 5) {
+                HStack(spacing: 4) {
                     Image(systemName: "star.fill")
-                        .font(.system(size: 8.5, weight: .bold))
+                        .font(.system(size: 7.5, weight: .bold))
                     Text(name)
-                        .font(.system(size: 11.5, weight: .semibold))
+                        .font(.system(size: 10.5, weight: .semibold))
                         .lineLimit(1)
                 }
                 .foregroundStyle(Theme.legible(Theme.holiday, colorScheme))
-                .padding(.horizontal, 8)
-                .frame(height: 20)
+                .padding(.horizontal, 7)
+                .frame(height: 17)
                 .background(Theme.holiday.opacity(colorScheme == .dark ? 0.18 : 0.11), in: .capsule)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Holiday: \(name)")
@@ -200,13 +200,13 @@ struct EmptyState: View {
     var height: CGFloat?
 
     var body: some View {
-        let label = VStack(spacing: 8) {
+        let label = VStack(spacing: 6) {
             Image(systemName: systemImage)
-                .font(.system(size: 22, weight: .regular))
+                .font(.system(size: 18, weight: .regular))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.tertiary)
             Text(text)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 11.5, weight: .medium))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -214,7 +214,7 @@ struct EmptyState: View {
             label.frame(height: height)
         } else {
             label
-                .padding(.vertical, 22)
+                .padding(.vertical, 16)
                 .surface(radius: Theme.groupRadius, elevated: false)
         }
     }

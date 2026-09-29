@@ -21,38 +21,38 @@ struct EventRow: View {
         let color = Color(event.color)
         let dark = colorScheme == .dark
         let shape = RoundedRectangle(cornerRadius: Theme.rowRadius, style: .continuous)
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
                 Text(event.title)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12.5, weight: .semibold))
                     .strikethrough(isStruck)
                     .lineLimit(2)
-                Spacer(minLength: 6)
+                Spacer(minLength: 4)
                 Text(AgendaFormat.timeText(start: event.start, end: event.end, isAllDay: event.isAllDay, showsTimeZone: false))
-                    .font(.system(size: 11.5, weight: .medium))
+                    .font(.system(size: 10.5, weight: .medium))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .fixedSize()
             }
             if let subtitle = event.displayedSubtitle {
                 Text(subtitle)
-                    .font(.system(size: 11.5))
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
             details
         }
-        .padding(.leading, 12)
+        .padding(.leading, 9)
         .opacity(isDimmed ? 0.5 : 1)
         .overlay(alignment: .leading) {
             Capsule()
                 .fill(color)
-                .frame(width: 4)
+                .frame(width: 3)
                 .opacity(isDimmed ? 0.55 : 1)
         }
-        .padding(.vertical, 9)
-        .padding(.leading, 8)
-        .padding(.trailing, 12)
+        .padding(.vertical, 6)
+        .padding(.leading, 6)
+        .padding(.trailing, 9)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             shape.fill(color.opacity(isDimmed ? (dark ? 0.06 : 0.05) : (dark ? 0.16 : 0.10)))
@@ -72,9 +72,9 @@ struct EventRow: View {
         let link = event.meetingURL ?? event.url
         let showsJoin = event.meetingURL != nil && (isHovered || showsHoverState)
         if let link {
-            HStack(spacing: 5) {
+            HStack(spacing: 4) {
                 Image(systemName: event.meetingURL != nil ? "video.fill" : "link")
-                    .font(.system(size: 9.5))
+                    .font(.system(size: 8.5))
                 Text(event.linkLabel ?? link.displayHost)
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -83,7 +83,7 @@ struct EventRow: View {
                         .opacity(showsJoin ? 0 : 1)
                 }
             }
-            .font(.system(size: 11.5))
+            .font(.system(size: 11))
             .foregroundStyle(.secondary)
             // An overlay, so showing the button doesn't change the row's height.
             .overlay(alignment: .trailing) {
@@ -97,7 +97,7 @@ struct EventRow: View {
                 RecurrenceIcon()
                 Text("Repeats")
             }
-            .font(.system(size: 11.5))
+            .font(.system(size: 11))
             .foregroundStyle(.tertiary)
         }
     }
@@ -106,7 +106,7 @@ struct EventRow: View {
 struct RecurrenceIcon: View {
     var body: some View {
         Image(systemName: "repeat")
-            .font(.system(size: 9.5, weight: .semibold))
+            .font(.system(size: 8.5, weight: .semibold))
             .foregroundStyle(.tertiary)
             .help("Repeats")
     }
@@ -118,22 +118,22 @@ struct NowMarker: View {
     let untilNext: TimeInterval?
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             Circle()
                 .fill(Theme.destructive)
-                .frame(width: 7, height: 7)
-                .shadow(color: Theme.destructive.opacity(0.6), radius: 3)
+                .frame(width: 6, height: 6)
+                .shadow(color: Theme.destructive.opacity(0.6), radius: 2.5)
             Capsule()
                 .fill(LinearGradient(colors: [Theme.destructive.opacity(0.8), Theme.destructive.opacity(0.12)],
                                      startPoint: .leading, endPoint: .trailing))
                 .frame(height: 1.5)
             if let untilNext {
                 Text("in \(AgendaFormat.compactDuration(untilNext))")
-                    .font(.system(size: 10.5, weight: .semibold))
+                    .font(.system(size: 9.5, weight: .semibold))
                     .monospacedDigit()
                     .foregroundStyle(Theme.destructive)
-                    .padding(.horizontal, 7)
-                    .frame(height: 18)
+                    .padding(.horizontal, 5)
+                    .frame(height: 15)
                     .background(Theme.destructive.opacity(0.12), in: .capsule)
             }
         }
@@ -151,7 +151,7 @@ struct ColorBar: View {
     var body: some View {
         Capsule()
             .fill(color)
-            .frame(width: 4)
+            .frame(width: 3)
             .frame(maxHeight: .infinity)
     }
 }
@@ -170,30 +170,30 @@ struct NextUpCard: View {
         let dark = colorScheme == .dark
         let shape = RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous)
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 6) {
-                Circle().fill(color).frame(width: 6, height: 6)
+            HStack(spacing: 5) {
+                Circle().fill(color).frame(width: 5, height: 5)
                 Text("Next up")
                     .textCase(.uppercase)
-                    .font(.system(size: 10.5, weight: .bold))
-                    .tracking(0.6)
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(0.5)
                     .foregroundStyle(ink)
                 Spacer()
-                HStack(spacing: 4) {
+                HStack(spacing: 3) {
                     Image(systemName: "clock")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 8.5, weight: .semibold))
                     Text("in \(AgendaFormat.compactDuration(event.start.timeIntervalSince(now)))")
-                        .font(.system(size: 11.5, weight: .semibold))
+                        .font(.system(size: 10, weight: .semibold))
                         .monospacedDigit()
                 }
                 .foregroundStyle(ink)
-                .padding(.horizontal, 8)
-                .frame(height: 22)
+                .padding(.horizontal, 6)
+                .frame(height: 17)
                 .background(color.opacity(dark ? 0.20 : 0.14), in: .capsule)
             }
             Text(event.title)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold))
                 .lineLimit(2)
-                .padding(.top, 8)
+                .padding(.top, 5)
             HStack(spacing: 5) {
                 Text(AgendaFormat.timeText(start: event.start, end: event.end, isAllDay: false))
                     .monospacedDigit()
@@ -207,29 +207,29 @@ struct NextUpCard: View {
                     RecurrenceIcon()
                 }
             }
-            .font(.system(size: 12))
+            .font(.system(size: 11))
             .foregroundStyle(.secondary)
-            .padding(.top, 3)
+            .padding(.top, 2)
             if let meetingURL = event.meetingURL {
-                HStack(spacing: 8) {
-                    HStack(spacing: 5) {
+                HStack(spacing: 6) {
+                    HStack(spacing: 4) {
                         Image(systemName: "video.fill")
-                            .font(.system(size: 10))
+                            .font(.system(size: 8.5))
                         Text(event.linkLabel ?? meetingURL.displayHost)
                             .lineLimit(1)
                     }
-                    .font(.system(size: 11.5))
+                    .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
                     Spacer()
                     JoinButton(url: meetingURL)
                 }
-                .padding(.top, 12)
+                .padding(.top, 7)
             }
         }
-        .padding(14)
+        .padding(10)
         .background {
             shape.fill(RadialGradient(colors: [color.opacity(dark ? 0.26 : 0.18), color.opacity(0)],
-                                      center: .topLeading, startRadius: 0, endRadius: 260))
+                                      center: .topLeading, startRadius: 0, endRadius: 200))
         }
         .surface(radius: Theme.cardRadius, tint: color, tintAmount: 1.2)
         .contentShape(shape)
@@ -251,14 +251,14 @@ struct JoinButton: View {
             NSWorkspace.shared.open(url)
         } label: {
             Label("Join", systemImage: "video.fill")
-                .font(.system(size: isCompact ? 11 : 12.5, weight: .semibold))
+                .font(.system(size: isCompact ? 10 : 11, weight: .semibold))
                 .labelStyle(JoinLabelStyle())
                 .foregroundStyle(.white)
-                .padding(.horizontal, isCompact ? 9 : 13)
-                .frame(height: isCompact ? 22 : 28)
+                .padding(.horizontal, isCompact ? 7 : 10)
+                .frame(height: isCompact ? 18 : 22)
                 .background {
                     Capsule().fill(Theme.join.gradient)
-                        .shadow(color: Theme.join.opacity(0.4), radius: isCompact ? 3 : 4, y: 1.5)
+                        .shadow(color: Theme.join.opacity(0.4), radius: isCompact ? 2 : 3, y: 1)
                     Capsule().fill(LinearGradient(colors: [.white.opacity(isHovered ? 0.30 : 0.18), .white.opacity(0)],
                                                   startPoint: .top, endPoint: .center))
                     Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
@@ -273,7 +273,7 @@ struct JoinButton: View {
 
     private struct JoinLabelStyle: LabelStyle {
         func makeBody(configuration: Configuration) -> some View {
-            HStack(spacing: 5) {
+            HStack(spacing: 4) {
                 configuration.icon.imageScale(.small)
                 configuration.title
             }

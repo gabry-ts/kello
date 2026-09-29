@@ -24,7 +24,7 @@ struct ReminderEditorView: View {
             VStack(spacing: Theme.rowSpacing + 4) {
                 FormCard {
                     FormRow("List") { listPicker }
-                    Hairline(leading: 12)
+                    Hairline(leading: 10)
                     FormRow("Date") {
                         if draft.hasDueDate {
                             DatePicker("", selection: $draft.due, displayedComponents: [.date])
@@ -37,7 +37,7 @@ struct ReminderEditorView: View {
                             .controlSize(.mini)
                     }
                     if draft.hasDueDate {
-                        Hairline(leading: 12)
+                        Hairline(leading: 10)
                         FormRow("Time") {
                             if draft.hasDueTime {
                                 DatePicker("", selection: $draft.due, displayedComponents: [.hourAndMinute])

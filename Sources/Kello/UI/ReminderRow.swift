@@ -12,7 +12,7 @@ struct ReminderGroup: View {
         VStack(spacing: 0) {
             ForEach(Array(reminders.enumerated()), id: \.element.id) { index, reminder in
                 if index > 0 {
-                    Hairline(leading: 38)
+                    Hairline(leading: 31)
                 }
                 ReminderRow(reminder: reminder, now: now, onComplete: { onComplete(reminder) }) { onOpen(reminder) }
             }
@@ -35,14 +35,14 @@ struct ReminderRow: View {
     var body: some View {
         let isOverdue = reminder.isOverdue(now: now)
         let color = Color(reminder.color)
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 8) {
             Button(action: check) {
                 Checkbox(isChecked: isChecked, color: color)
             }
             .buttonStyle(.plain)
             .help("Complete")
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
                     if reminder.priority != 0 {
                         Text(String(repeating: "!", count: priorityMarks))
                             .fontWeight(.bold)
@@ -52,25 +52,28 @@ struct ReminderRow: View {
                         .strikethrough(isChecked)
                         .lineLimit(2)
                 }
-                .font(.system(size: 13))
+                .font(.system(size: 12.5))
+                // The overdue age shares the due line, leaving the title the full width.
                 if let due = reminder.due {
-                    Text(dueText(due))
-                        .font(.system(size: 11.5))
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(dueText(due))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
+                        if isOverdue {
+                            Text(AgendaFormat.overdueAge(since: due, now: now))
+                                .foregroundStyle(Theme.destructive)
+                                .fixedSize()
+                        }
+                    }
+                    .font(.system(size: 11))
+                    .monospacedDigit()
                 }
             }
-            Spacer(minLength: 8)
-            if isOverdue, let due = reminder.due {
-                Text(AgendaFormat.overdueAge(since: due, now: now))
-                    .font(.system(size: 11.5))
-                    .monospacedDigit()
-                    .foregroundStyle(Theme.destructive)
-                    .padding(.top, 1)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 9)
         .opacity(isChecked ? 0.5 : 1)
         .contentShape(.rect)
         .hoverHighlight(cornerRadius: 0, opacity: 0.04)
@@ -121,12 +124,12 @@ private struct Checkbox: View {
                 .scaleEffect(isChecked ? 1 : (isHovered ? 0.45 : 0.001))
                 .opacity(isChecked ? 1 : (isHovered ? 0.3 : 0))
             Image(systemName: "checkmark")
-                .font(.system(size: 8.5, weight: .heavy))
+                .font(.system(size: 7.5, weight: .heavy))
                 .foregroundStyle(.white)
                 .scaleEffect(isChecked ? 1 : 0.4)
                 .opacity(isChecked ? 1 : 0)
         }
-        .frame(width: 16, height: 16)
+        .frame(width: 14, height: 14)
         .padding(.top, 0.5)
         // A larger target than the ring itself.
         .padding(4)

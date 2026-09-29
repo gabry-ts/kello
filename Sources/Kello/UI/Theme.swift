@@ -5,37 +5,37 @@ import SwiftUI
 enum Theme {
     // MARK: Layout
 
-    static let popoverWidth: CGFloat = 320
-    static let popoverPadding: CGFloat = 14
+    static let popoverWidth: CGFloat = 260
+    static let popoverPadding: CGFloat = 10
     static var contentWidth: CGFloat { popoverWidth - popoverPadding * 2 }
 
     /// Vertical rhythm of the popover and the editors.
-    static let spacing: CGFloat = 12
-    static let rowSpacing: CGFloat = 6
+    static let spacing: CGFloat = 8
+    static let rowSpacing: CGFloat = 4
 
     /// The agenda and reminders under the grid, fixed so the popover keeps one height.
-    static let listHeight: CGFloat = 320
+    static let listHeight: CGFloat = 300
 
     // MARK: Radii
 
     /// The grid, the Next up card and the editor sections.
-    static let cardRadius: CGFloat = 20
+    static let cardRadius: CGFloat = 12
     /// Grouped reminders and the permission rows.
-    static let groupRadius: CGFloat = 16
+    static let groupRadius: CGFloat = 10
     /// One event.
-    static let rowRadius: CGFloat = 14
+    static let rowRadius: CGFloat = 9
 
     // MARK: Controls
 
     /// Round toolbar buttons and the height of the Today pill.
-    static let controlSize: CGFloat = 30
-    static let segmentHeight: CGFloat = 26
+    static let controlSize: CGFloat = 22
+    static let segmentHeight: CGFloat = 18
 
     // MARK: Grid
 
-    static let cellHeight: CGFloat = 36
-    static let dayCircle: CGFloat = 26
-    static let dotSize: CGFloat = 4
+    static let cellHeight: CGFloat = 25
+    static let dayCircle: CGFloat = 20
+    static let dotSize: CGFloat = 3
 
     // MARK: Colors
 
@@ -99,7 +99,7 @@ struct Surface: ViewModifier {
                     lineWidth: 1)
                 shape.strokeBorder((tint ?? .black).opacity(high ? 0.35 : (dark ? 0.16 : 0.08)), lineWidth: high ? 1 : 0.5)
             }
-            .shadow(color: .black.opacity(elevated ? (dark ? 0.22 : 0.06) : 0), radius: 6, y: 2)
+            .shadow(color: .black.opacity(elevated ? (dark ? 0.22 : 0.06) : 0), radius: 4, y: 1.5)
         }
     }
 }

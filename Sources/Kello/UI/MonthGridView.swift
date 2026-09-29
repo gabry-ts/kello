@@ -65,8 +65,8 @@ struct MonthGridView: View {
     var onDoubleClick: ((Date) -> Void)?
 
     static let rowHeight = Theme.cellHeight
-    private static let weekNumberWidth: CGFloat = 20
-    private static let cardPadding: CGFloat = 8
+    private static let weekNumberWidth: CGFloat = 16
+    private static let cardPadding: CGFloat = 6
 
     private var calendar: Calendar { .current }
 
@@ -76,7 +76,7 @@ struct MonthGridView: View {
         let month = calendar.component(.month, from: viewModel.referenceDate)
         let grid = MonthGrid.rows(year: year, month: month, firstWeekday: settings.firstWeekday)
 
-        VStack(alignment: .leading, spacing: Theme.spacing) {
+        VStack(alignment: .leading, spacing: 6) {
             header
             VStack(spacing: 0) {
                 weekdayRow(grid, showWeekNumbers: settings.showWeekNumbers)
@@ -89,8 +89,8 @@ struct MonthGridView: View {
                 .clipped()
             }
             .padding(.horizontal, Self.cardPadding)
-            .padding(.top, 4)
-            .padding(.bottom, 8)
+            .padding(.top, 2)
+            .padding(.bottom, 5)
             .surface()
         }
         .animation(Theme.spring(reduceMotion), value: viewModel.referenceDate)
@@ -105,16 +105,16 @@ struct MonthGridView: View {
 
     private var header: some View {
         HStack(spacing: 0) {
-            HStack(alignment: .firstTextBaseline, spacing: 7) {
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(viewModel.referenceDate.formatted(.dateTime.month(.wide)))
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 15, weight: .semibold))
                 Text(viewModel.referenceDate.formatted(.dateTime.year()))
-                    .font(.system(size: 20, weight: .regular))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
             .contentTransition(.numericText(countsDown: !viewModel.isMovingForward))
-            .padding(.leading, 4)
+            .padding(.leading, 3)
             .lineLimit(1)
             Spacer(minLength: 8)
             HStack(spacing: 0) {
@@ -124,8 +124,8 @@ struct MonthGridView: View {
                 .help("Previous Month")
                 Button { viewModel.goToToday() } label: {
                     Text("Today")
-                        .font(.system(size: 12, weight: .semibold))
-                        .padding(.horizontal, 6)
+                        .font(.system(size: 11, weight: .semibold))
+                        .padding(.horizontal, 3)
                 }
                 .help("Today")
                 Button { viewModel.goToNextMonth() } label: {
@@ -148,12 +148,12 @@ struct MonthGridView: View {
             }
             ForEach(grid.weeks.first?.days ?? [], id: \.date) { day in
                 Text(calendar.veryShortWeekdaySymbols[calendar.component(.weekday, from: day.date) - 1])
-                    .font(.system(size: 10.5, weight: .semibold))
+                    .font(.system(size: 9.5, weight: .semibold))
                     .foregroundStyle(calendar.isDateInWeekend(day.date) ? .tertiary : .secondary)
                     .frame(maxWidth: .infinity)
             }
         }
-        .frame(height: 24)
+        .frame(height: 18)
     }
 
     private func monthBody(_ grid: MonthGrid, showWeekNumbers: Bool) -> some View {
@@ -162,10 +162,10 @@ struct MonthGridView: View {
                 VStack(spacing: 0) {
                     ForEach(grid.weeks, id: \.self) { week in
                         Text("\(week.weekNumber)")
-                            .font(.system(size: 9.5, weight: .semibold))
+                            .font(.system(size: 8.5, weight: .semibold))
                             .monospacedDigit()
                             .foregroundStyle(.tertiary)
-                            .padding(.top, 8)
+                            .padding(.top, 5)
                             .frame(width: Self.weekNumberWidth, height: Self.rowHeight, alignment: .top)
                     }
                 }
@@ -207,14 +207,14 @@ private struct DayCell: View {
     @State private var isHovered = false
 
     var body: some View {
-        VStack(spacing: 3) {
+        VStack(spacing: 1) {
             Text("\(day.day)")
-                .font(.system(size: 13, weight: isToday ? .semibold : (isHoliday && day.isInCurrentMonth ? .medium : .regular)))
+                .font(.system(size: 12, weight: isToday ? .semibold : (isHoliday && day.isInCurrentMonth ? .medium : .regular)))
                 .monospacedDigit()
                 .foregroundStyle(numberStyle)
                 .frame(width: Theme.dayCircle, height: Theme.dayCircle)
                 .background { circle }
-            HStack(spacing: 2) {
+            HStack(spacing: 1.5) {
                 ForEach(Array(dots.prefix(4).enumerated()), id: \.offset) { _, color in
                     Circle()
                         .fill(color)
@@ -224,7 +224,7 @@ private struct DayCell: View {
             .frame(height: Theme.dotSize)
             .opacity(day.isInCurrentMonth ? 1 : 0.4)
         }
-        .padding(.top, 1)
+        .padding(.top, 0.5)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .frame(height: MonthGridView.rowHeight)
         .contentShape(.rect)
@@ -246,7 +246,7 @@ private struct DayCell: View {
         if isToday {
             Circle()
                 .fill(Color.accentColor.gradient)
-                .shadow(color: .accentColor.opacity(0.45), radius: 4, y: 1.5)
+                .shadow(color: .accentColor.opacity(0.45), radius: 3, y: 1)
         } else if isSelected {
             Circle()
                 .fill(Color.accentColor.opacity(colorScheme == .dark ? 0.22 : 0.13))

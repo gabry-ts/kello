@@ -55,20 +55,20 @@ struct EventEditorView: View {
         VStack(spacing: Theme.rowSpacing + 4) {
             FormCard {
                 FormRow("Calendar") { CalendarPicker(calendarID: $draft.calendarID) }
-                Hairline(leading: 12)
+                Hairline(leading: 10)
                 FormRow("All-day") {
                     Toggle("", isOn: $draft.isAllDay)
                         .labelsHidden()
                         .toggleStyle(.switch)
                         .controlSize(.mini)
                 }
-                Hairline(leading: 12)
+                Hairline(leading: 10)
                 FormRow("Starts") {
                     DatePicker("", selection: startBinding, displayedComponents: draft.isAllDay ? [.date] : [.date, .hourAndMinute])
                         .labelsHidden()
                         .datePickerStyle(.field)
                 }
-                Hairline(leading: 12)
+                Hairline(leading: 10)
                 FormRow("Ends") {
                     DatePicker("", selection: $draft.end, in: draft.start..., displayedComponents: draft.isAllDay ? [.date] : [.date, .hourAndMinute])
                         .labelsHidden()
@@ -84,7 +84,7 @@ struct EventEditorView: View {
                     .labelsHidden()
                     .fixedSize()
                 }
-                Hairline(leading: 12)
+                Hairline(leading: 10)
                 FormRow("Repeat") {
                     Picker("", selection: $draft.repeatRule) {
                         ForEach(RepeatOption.allCases, id: \.self) { Text($0.title).tag($0) }
@@ -96,9 +96,9 @@ struct EventEditorView: View {
             }
             FormCard {
                 FormField(systemImage: "mappin.and.ellipse", placeholder: "Location", text: $draft.location)
-                Hairline(leading: 36)
+                Hairline(leading: 30)
                 FormField(systemImage: "link", placeholder: "URL", text: $draft.url)
-                Hairline(leading: 36)
+                Hairline(leading: 30)
                 FormField(systemImage: "text.alignleft", placeholder: "Notes", text: $draft.notes, isMultiline: true)
             }
         }
@@ -168,7 +168,7 @@ struct EditorHeader: View {
 
     var body: some View {
         GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Button(action: onBack) {
                     GlassCircle(systemImage: "chevron.left")
                 }
@@ -176,16 +176,17 @@ struct EditorHeader: View {
                 .keyboardShortcut(.cancelAction)
                 .help("Back")
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 if showsSave {
                     Button(action: onSave) {
                         Text("Save")
-                            .font(.system(size: 12.5, weight: .semibold))
-                            .padding(.horizontal, 6)
+                            .font(.system(size: 11, weight: .semibold))
+                            .padding(.horizontal, 3)
                     }
                     .buttonStyle(.glassProminent)
                     .buttonBorderShape(.capsule)
+                    .controlSize(.small)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!canSave)
                 }
@@ -205,29 +206,36 @@ struct SpanConfirmation: View {
     let onCancel: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
                 Image(systemName: isDestructive ? "trash" : "repeat")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(isDestructive ? Theme.destructive : Color.accentColor)
                 Text(message)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            HStack(spacing: 6) {
+            // The two span buttons and Cancel don't fit on one line in the popover.
+            VStack(alignment: .leading, spacing: 6) {
                 if asksForSpan {
-                    confirm("This Event Only", span: .thisEvent)
-                    confirm("All Future Events", span: .futureEvents)
-                } else {
-                    confirm(isDestructive ? "Delete" : "Save", span: .thisEvent)
+                    HStack(spacing: 6) {
+                        confirm("This Event Only", span: .thisEvent)
+                        confirm("All Future Events", span: .futureEvents)
+                    }
                 }
-                Spacer(minLength: 0)
-                Button("Cancel", action: onCancel)
-                    .buttonStyle(.glass)
+                HStack(spacing: 6) {
+                    if !asksForSpan {
+                        confirm(isDestructive ? "Delete" : "Save", span: .thisEvent)
+                    }
+                    Spacer(minLength: 0)
+                    Button("Cancel", action: onCancel)
+                        .buttonStyle(.glass)
+                }
             }
             .buttonBorderShape(.capsule)
             .controlSize(.small)
         }
-        .padding(12)
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .surface(radius: Theme.groupRadius, tint: isDestructive ? Theme.destructive : .accentColor, tintAmount: 0.7)
         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .bottom)))
@@ -249,16 +257,16 @@ struct EditorTitleField: View {
     let color: Color
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Capsule()
                 .fill(color)
-                .frame(width: 4, height: 22)
+                .frame(width: 3, height: 16)
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 13.5, weight: .semibold))
         }
-        .padding(.horizontal, 12)
-        .frame(height: 46)
+        .padding(.horizontal, 10)
+        .frame(height: 34)
         .surface(radius: Theme.groupRadius)
     }
 }
@@ -271,7 +279,8 @@ struct FormCard<Content: View>: View {
         VStack(spacing: 0) {
             content
         }
-        .font(.system(size: 13))
+        .font(.system(size: 12))
+        .controlSize(.small)
         .surface(radius: Theme.groupRadius)
     }
 }
@@ -287,14 +296,14 @@ struct FormRow<Control: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Text(label)
                 .foregroundStyle(.primary)
-            Spacer(minLength: 8)
+            Spacer(minLength: 6)
             control
         }
-        .padding(.horizontal, 12)
-        .frame(minHeight: 38)
+        .padding(.horizontal, 10)
+        .frame(minHeight: 30)
     }
 }
 
@@ -306,11 +315,11 @@ struct FormField: View {
     var isMultiline = false
 
     var body: some View {
-        HStack(alignment: isMultiline ? .firstTextBaseline : .center, spacing: 10) {
+        HStack(alignment: isMultiline ? .firstTextBaseline : .center, spacing: 8) {
             Image(systemName: systemImage)
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 14)
+                .frame(width: 12)
             Group {
                 if isMultiline {
                     TextField(placeholder, text: $text, axis: .vertical)
@@ -321,9 +330,9 @@ struct FormField: View {
             }
             .textFieldStyle(.plain)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .frame(minHeight: 38)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .frame(minHeight: 30)
     }
 }
 
@@ -335,10 +344,10 @@ struct DeleteButton: View {
     var body: some View {
         Button(role: .destructive, action: action) {
             Label(title, systemImage: "trash")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(Theme.destructive)
                 .frame(maxWidth: .infinity)
-                .frame(height: 38)
+                .frame(height: 30)
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -353,9 +362,9 @@ struct EditorError: View {
 
     var body: some View {
         Label(message, systemImage: "exclamationmark.triangle.fill")
-            .font(.system(size: 12))
+            .font(.system(size: 11))
             .foregroundStyle(Theme.destructive)
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 3)
     }
 }
 

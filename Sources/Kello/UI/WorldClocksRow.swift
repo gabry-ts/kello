@@ -9,7 +9,7 @@ struct WorldClocksRow: View {
     let now: Date
 
     private static let maxFitting = 3
-    private static let scrollingWidth: CGFloat = 92
+    private static let scrollingWidth: CGFloat = 76
 
     var body: some View {
         let readings = zones.map { WorldClock.reading(for: $0, now: now) }
@@ -23,7 +23,7 @@ struct WorldClocksRow: View {
                 .scrollIndicators(.never)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 5)
         .surface(radius: Theme.groupRadius, elevated: false)
     }
 
@@ -33,7 +33,7 @@ struct WorldClocksRow: View {
                 if index > 0 {
                     Rectangle()
                         .fill(.primary.opacity(0.09))
-                        .frame(width: 0.5, height: 26)
+                        .frame(width: 0.5, height: 22)
                 }
                 ClockColumn(reading: reading)
                     .frame(width: width)
@@ -48,30 +48,30 @@ private struct ClockColumn: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(spacing: 2) {
-            HStack(spacing: 4) {
+        VStack(spacing: 1) {
+            HStack(spacing: 3) {
                 Image(systemName: reading.isDaytime ? "sun.max.fill" : "moon.fill")
-                    .font(.system(size: 8.5, weight: .semibold))
+                    .font(.system(size: 7.5, weight: .semibold))
                     .foregroundStyle(Theme.legible(reading.isDaytime ? Theme.daytime : Theme.nighttime, colorScheme))
                 Text(reading.name)
-                    .font(.system(size: 10.5, weight: .medium))
+                    .font(.system(size: 9.5, weight: .medium))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(reading.time)
-                    .font(.system(size: 12.5, weight: .semibold))
+                    .font(.system(size: 11.5, weight: .semibold))
                     .monospacedDigit()
                     .lineLimit(1)
                 if let offset = reading.dayOffsetText {
                     Text(offset)
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.system(size: 8, weight: .bold))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
             }
         }
-        .padding(.horizontal, 6)
+        .padding(.horizontal, 4)
         .accessibilityElement(children: .combine)
     }
 }

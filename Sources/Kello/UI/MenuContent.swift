@@ -186,7 +186,7 @@ extension View {
     /// The popover's width and margins, shared by the agenda and the editors.
     func popoverFrame() -> some View {
         padding(.horizontal, Theme.popoverPadding)
-            .padding(.top, 16)
+            .padding(.top, 12)
             .padding(.bottom, Theme.popoverPadding)
             .frame(width: Theme.popoverWidth)
     }

@@ -44,33 +44,33 @@ struct SearchView: View {
 
     private var header: some View {
         GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Button(action: onClose) {
                     GlassCircle(systemImage: "chevron.left")
                 }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
                 .help("Back")
-                HStack(spacing: 7) {
+                HStack(spacing: 6) {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 10.5, weight: .semibold))
                         .foregroundStyle(.secondary)
                     TextField("Search Events", text: $query)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 13))
+                        .font(.system(size: 12))
                         .focused($isFocused)
                         .onSubmit(openFirst)
                     if !query.isEmpty {
                         Button { query = "" } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 12))
+                                .font(.system(size: 11))
                                 .foregroundStyle(.tertiary)
                         }
                         .buttonStyle(.plain)
                         .help("Clear")
                     }
                 }
-                .padding(.horizontal, 11)
+                .padding(.horizontal, 9)
                 .frame(height: Theme.controlSize)
                 .glassEffect(.regular, in: .capsule)
                 .glassEdge(Capsule())
@@ -85,12 +85,12 @@ struct SearchView: View {
             ProgressView()
                 .controlSize(.small)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 22)
+                .padding(.vertical, 16)
         } else if EventMatcher(query: query).isEmpty {
             EmptyState(text: "Titles, locations and notes", systemImage: "magnifyingglass")
         } else {
             AgendaView(sections: sections, now: now, emptyText: "No Results", emptyImage: "magnifyingglass",
-                       maxHeight: 440, openEvent: onSelect)
+                       maxHeight: 400, openEvent: onSelect)
         }
     }
 
