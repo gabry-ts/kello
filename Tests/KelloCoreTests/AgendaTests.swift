@@ -57,15 +57,16 @@ final class AgendaTests: XCTestCase {
             reminder("Older", due: date(7, 9)),
             reminder("Yesterday", due: date(28, 9)),
             reminder("Due today", due: date(29, 8)),
+            reminder("Later today", due: date(29, 0), hasTime: false),
             reminder("Undated", due: nil),
         ]
         let sections = Agenda.sections(days: [now], events: events, reminders: reminders, now: now, calendar: calendar, locale: locale)
-        XCTAssertEqual(sections.map(\.title), ["3 weeks ago", "Yesterday", "Today"])
-        XCTAssertEqual(sections[0].entries.map(\.id), ["r|Older", "r|Old"])
-        XCTAssertEqual(sections[2].entries.map(\.id), [
-            "r|Due today", events[2].id.prefixed("e|"), events[0].id.prefixed("e|"), "now", events[1].id.prefixed("e|"),
+        XCTAssertEqual(sections.map(\.title), ["Overdue", "Today"])
+        XCTAssertEqual(sections[0].entries.map(\.id), ["r|Older", "r|Old", "r|Yesterday", "r|Due today"])
+        XCTAssertEqual(sections[1].entries.map(\.id), [
+            "r|Later today", events[2].id.prefixed("e|"), events[0].id.prefixed("e|"), "now", events[1].id.prefixed("e|"),
         ])
-        XCTAssertEqual(sections[2].entries[3], .now(untilNext: 2 * 3600))
+        XCTAssertEqual(sections[1].entries[3], .now(untilNext: 2 * 3600))
     }
 
     func testOtherDaysSkipOverdueAndTheNowMarker() {
@@ -90,6 +91,19 @@ final class AgendaTests: XCTestCase {
         let days = [date(29, 0), date(30, 0), date(1, 0, month: 10)]
         let sections = Agenda.sections(days: days, events: [trip], reminders: [], now: now, calendar: calendar, locale: locale)
         XCTAssertEqual(sections.map(\.title), ["Today", "Tomorrow"])
+    }
+
+    func testNextUpIsTheNextTimedEventToday() {
+        let events = [
+            event("Past", date(29, 8), date(29, 9)),
+            event("Ongoing", date(29, 9, 30), date(29, 11)),
+            event("Allday", date(29, 0), date(30, 0), allDay: true),
+            event("Later", date(29, 15), date(29, 16)),
+            event("Soon", date(29, 11), date(29, 12)),
+            event("Tomorrow", date(30, 9), date(30, 10)),
+        ]
+        XCTAssertEqual(Agenda.nextUp(events: events, now: now, calendar: calendar)?.title, "Soon")
+        XCTAssertNil(Agenda.nextUp(events: [events[5]], now: now, calendar: calendar))
     }
 
     func testOverdueAge() {

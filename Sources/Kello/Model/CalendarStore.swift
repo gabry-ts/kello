@@ -20,6 +20,8 @@ final class CalendarStore {
     private(set) var eventsAccess: Access
     private(set) var remindersAccess: Access
     private(set) var revision = 0
+    /// Incomplete reminders with a due date, refreshed by `loadReminders()`.
+    private(set) var reminders: [ReminderItem] = []
 
     @ObservationIgnored let eventStore = EKEventStore()
     @ObservationIgnored private var observer: NSObjectProtocol?
@@ -28,11 +30,13 @@ final class CalendarStore {
     @ObservationIgnored private let isLive: Bool
     @ObservationIgnored private var sampleEvents: [CalendarEvent] = []
     @ObservationIgnored private var sampleCalendars: [CalendarInfo] = []
+    @ObservationIgnored private var sampleReminderLists: [CalendarInfo] = []
 
     /// Fetches memoized per `revision`, since views ask for the same ranges on every redraw.
     @ObservationIgnored private var cachedRevision = -1
     @ObservationIgnored private var eventCache: [DateInterval: [CalendarEvent]] = [:]
     @ObservationIgnored private var calendarCache: [CalendarInfo]?
+    @ObservationIgnored private var reminderListCache: [CalendarInfo]?
 
     init() {
         isLive = true
@@ -43,12 +47,15 @@ final class CalendarStore {
         }
     }
 
-    init(eventsAccess: Access, remindersAccess: Access, events: [CalendarEvent] = [], calendars: [CalendarInfo] = []) {
+    init(eventsAccess: Access, remindersAccess: Access, events: [CalendarEvent] = [], calendars: [CalendarInfo] = [],
+         reminders: [ReminderItem] = [], reminderLists: [CalendarInfo] = []) {
         isLive = false
         self.eventsAccess = eventsAccess
         self.remindersAccess = remindersAccess
         sampleEvents = events
         sampleCalendars = calendars
+        self.reminders = reminders
+        sampleReminderLists = reminderLists
     }
 
     // MARK: Reading
@@ -79,6 +86,43 @@ final class CalendarStore {
         return calendars
     }
 
+    /// Every reminder list, sorted by account and then title.
+    var reminderLists: [CalendarInfo] {
+        invalidateIfStale()
+        guard remindersAccess == .granted else { return [] }
+        if let reminderListCache { return reminderListCache }
+        let lists = CalendarInfo.sortedForDisplay(isLive ? eventStore.calendars(for: .reminder).map(CalendarInfo.init) : sampleReminderLists)
+        reminderListCache = lists
+        return lists
+    }
+
+    /// Fetches incomplete reminders off the main thread; EventKit only offers them
+    /// asynchronously. Reminders without a due date are dropped.
+    func loadReminders() async {
+        guard isLive else { return }
+        guard remindersAccess == .granted else {
+            reminders = []
+            return
+        }
+        let predicate = eventStore.predicateForIncompleteReminders(withDueDateStarting: nil, ending: nil, calendars: nil)
+        let items: [ReminderItem] = await withCheckedContinuation { continuation in
+            eventStore.fetchReminders(matching: predicate) { found in
+                continuation.resume(returning: (found ?? []).compactMap(ReminderItem.init))
+            }
+        }
+        reminders = items
+    }
+
+    /// The list new reminders go in, unless it's hidden.
+    func defaultReminderListID(hidden: Set<String>) -> String {
+        let lists = reminderLists.filter(\.isWritable)
+        if isLive, let id = eventStore.defaultCalendarForNewReminders()?.calendarIdentifier,
+           !hidden.contains(id), lists.contains(where: { $0.id == id }) {
+            return id
+        }
+        return (lists.first { !hidden.contains($0.id) } ?? lists.first)?.id ?? ""
+    }
+
     /// Calendars new events can go in.
     var writableCalendars: [CalendarInfo] {
         eventCalendars.filter(\.isWritable)
@@ -99,11 +143,13 @@ final class CalendarStore {
     enum WriteError: LocalizedError {
         case notFound
         case noCalendar
+        case noList
 
         var errorDescription: String? {
             switch self {
-            case .notFound: String(localized: "The event no longer exists.")
+            case .notFound: String(localized: "It no longer exists.")
             case .noCalendar: String(localized: "Choose a calendar for the event.")
+            case .noList: String(localized: "Choose a list for the reminder.")
             }
         }
     }
@@ -158,6 +204,47 @@ final class CalendarStore {
         revision += 1
     }
 
+    /// Marks the reminder done. It leaves the list right away; the row animates its
+    /// checkmark before calling this.
+    func complete(_ reminder: ReminderItem) throws {
+        reminders.removeAll { $0.id == reminder.id }
+        guard isLive else { return }
+        guard let item = eventStore.calendarItem(withIdentifier: reminder.id) as? EKReminder else { throw WriteError.notFound }
+        item.isCompleted = true
+        try eventStore.save(item, commit: true)
+    }
+
+    func save(_ draft: ReminderDraft) throws {
+        guard isLive else { return }
+        let reminder: EKReminder
+        if let id = draft.id {
+            guard let existing = eventStore.calendarItem(withIdentifier: id) as? EKReminder else { throw WriteError.notFound }
+            reminder = existing
+        } else {
+            reminder = EKReminder(eventStore: eventStore)
+        }
+        guard let list = eventStore.calendar(withIdentifier: draft.listID) else { throw WriteError.noList }
+        reminder.calendar = list
+        reminder.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        reminder.dueDateComponents = draft.dueComponents()
+        // Like Reminders.app, a new reminder with a due time alerts at it. Existing alarms
+        // are left alone, since they may have been set up elsewhere.
+        if draft.isNew, draft.hasDueDate, draft.hasDueTime {
+            reminder.alarms = [EKAlarm(absoluteDate: draft.due)]
+        }
+        reminder.notes = draft.notes.nilIfBlank
+        reminder.priority = draft.priority.rawValue
+        try eventStore.save(reminder, commit: true)
+        revision += 1
+    }
+
+    func delete(_ draft: ReminderDraft) throws {
+        guard isLive, let id = draft.id else { return }
+        guard let reminder = eventStore.calendarItem(withIdentifier: id) as? EKReminder else { throw WriteError.notFound }
+        try eventStore.remove(reminder, commit: true)
+        revision += 1
+    }
+
     /// The occurrence of a (possibly recurring) event starting at `occurrenceStart`, found
     /// by fetching that day, since `event(withIdentifier:)` returns the first occurrence.
     private func findEvent(_ identifier: String, occurrenceStart: Date?) -> EKEvent? {
@@ -180,6 +267,7 @@ final class CalendarStore {
         cachedRevision = revision
         eventCache = [:]
         calendarCache = nil
+        reminderListCache = nil
     }
 
     /// The popover asks for access when events are readable but reminders were never asked

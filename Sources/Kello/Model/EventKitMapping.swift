@@ -46,6 +46,25 @@ extension CalendarEvent {
     }
 }
 
+extension ReminderItem {
+    /// Nil for reminders without a due date, which the popover doesn't list.
+    init?(_ reminder: EKReminder) {
+        guard let components = reminder.dueDateComponents else { return nil }
+        let calendar = components.calendar ?? Calendar.current
+        let hasTime = components.hour != nil
+        guard let date = calendar.date(from: components) else { return nil }
+        self.init(
+            id: reminder.calendarItemIdentifier,
+            listID: reminder.calendar?.calendarIdentifier ?? "",
+            title: reminder.title?.isEmpty == false ? reminder.title : String(localized: "New Reminder"),
+            due: hasTime ? date : Calendar.current.startOfDay(for: date),
+            hasDueTime: hasTime,
+            notes: reminder.notes,
+            priority: reminder.priority,
+            color: ItemColor(reminder.calendar?.cgColor))
+    }
+}
+
 extension EKEvent {
     /// All-day events end at 23:59:59 of their last day; KelloCore wants the midnight
     /// after it, like timed events' exclusive ends.

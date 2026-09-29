@@ -1,39 +1,58 @@
 import KelloCore
 import SwiftUI
 
-/// The row of icon buttons under the grid.
+/// The row under the grid: the Agenda / Reminders switch, then pin, new and more.
 struct PopoverToolbar: View {
     @Environment(SettingsStore.self) private var store
+    @Environment(CalendarStore.self) private var calendars
     @Environment(PopoverState.self) private var popover
     let openSettings: () -> Void
-    /// Nil while calendars can't be written to.
+    /// Nil while calendars can't be read.
     var newEvent: (() -> Void)?
+    /// Nil while reminders can't be read.
+    var newReminder: (() -> Void)?
 
     var body: some View {
         @Bindable var store = store
         @Bindable var popover = popover
         HStack(spacing: 2) {
+            if calendars.remindersAccess == .granted {
+                Picker("", selection: $store.settings.listTab) {
+                    Text("Agenda").tag(ListTab.agenda)
+                    Text("Reminders").tag(ListTab.reminders)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
+                .controlSize(.small)
+            }
+            Spacer()
             Button { popover.isPinned.toggle() } label: {
                 Image(systemName: popover.isPinned ? "pin.fill" : "pin")
             }
             .help(popover.isPinned ? "Unpin" : "Keep Open")
-            Button { newEvent?() } label: {
+            Menu {
+                Button("New Event") { newEvent?() }
+                    .disabled(newEvent == nil)
+                Button("New Reminder") { newReminder?() }
+                    .disabled(newReminder == nil)
+            } label: {
                 Image(systemName: "plus")
             }
-            .disabled(newEvent == nil)
-            .help("New Event")
-            Spacer()
-            Button {
-                store.settings.agendaMode = store.settings.agendaMode == .day ? .upcoming : .day
-            } label: {
-                Image(systemName: store.settings.agendaMode == .day ? "list.bullet" : "list.bullet.indent")
-            }
-            .help(store.settings.agendaMode == .day ? "Show Upcoming" : "Show Selected Day")
-            CalendarVisibilityMenu()
+            .menuStyle(.button)
+            .menuIndicator(.hidden)
+            .disabled(newEvent == nil && newReminder == nil)
+            .help("New")
             Menu {
+                Toggle("Show Upcoming Days", isOn: Binding(
+                    get: { store.settings.agendaMode == .upcoming },
+                    set: { store.settings.agendaMode = $0 ? .upcoming : .day }))
+                if calendars.eventsAccess == .granted {
+                    CalendarVisibilityMenu()
+                }
+                Divider()
                 Button("Settings…", action: openSettings)
                     .keyboardShortcut(",")
-                Divider()
                 Button("Quit Kello") { NSApplication.shared.terminate(nil) }
                     .keyboardShortcut("q")
             } label: {

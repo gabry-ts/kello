@@ -94,3 +94,64 @@ struct ColorBar: View {
             .frame(maxHeight: .infinity)
     }
 }
+
+/// The next event today that hasn't started, at the top of the agenda: its time,
+/// location, a countdown, and a Join button for video calls.
+struct NextUpCard: View {
+    let event: CalendarEvent
+    let now: Date
+    var onOpen: (() -> Void)?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            ColorBar(color: Color(event.color))
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 4) {
+                    Text("Next up")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                    Spacer()
+                    Text("in \(AgendaFormat.compactDuration(event.start.timeIntervalSince(now)))")
+                        .font(.system(size: 11, weight: .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(.tint)
+                }
+                HStack(spacing: 4) {
+                    Text(event.title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .lineLimit(2)
+                    if event.isRecurring {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Text(AgendaFormat.timeRange(start: event.start, end: event.end, isAllDay: false))
+                    .font(.system(size: 11))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                if let subtitle = event.subtitle, event.meetingURL?.absoluteString != subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                if let meetingURL = event.meetingURL {
+                    Button {
+                        NSWorkspace.shared.open(meetingURL)
+                    } label: {
+                        Label("Join", systemImage: "video.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .padding(.top, 2)
+                }
+            }
+        }
+        .padding(8)
+        .background(.primary.opacity(0.05), in: .rect(cornerRadius: 10, style: .continuous))
+        .contentShape(.rect)
+        .onTapGesture { onOpen?() }
+    }
+}

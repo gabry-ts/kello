@@ -52,9 +52,9 @@ public enum Agenda {
         }
     }
 
-    /// Builds the list. Overdue reminders come first, grouped by how long ago they were
-    /// due, but only when today is among `days`; then one section per day with reminders
-    /// due that day, all-day events, and timed events in start order. Today's section gets
+    /// Builds the list. Overdue reminders come first, in one section, but only when today
+    /// is among `days`; then one section per day with reminders due that day, all-day
+    /// events, and timed events in start order. Today's section gets
     /// a "now" marker. Days with nothing on them are left out.
     public static func sections(
         days: [Date],
@@ -68,25 +68,20 @@ public enum Agenda {
         let days = days.map { calendar.startOfDay(for: $0) }
         var sections: [AgendaSection] = []
 
-        if days.contains(today) {
-            let overdue = reminders
-                .filter { $0.isOverdue(now: now, calendar: calendar) && $0.due.map { $0 < today } == true }
-                .sorted { ($0.due ?? .distantPast) < ($1.due ?? .distantPast) }
-            // Adjacent reminders sharing a title ("2 weeks ago") share a section.
-            for reminder in overdue {
-                let title = sectionTitle(for: reminder.due ?? today, now: now, calendar: calendar, locale: locale)
-                if let last = sections.last, last.title == title {
-                    sections[sections.count - 1] = AgendaSection(title: title, entries: last.entries + [.reminder(reminder)])
-                } else {
-                    sections.append(AgendaSection(title: title, entries: [.reminder(reminder)]))
-                }
-            }
+        // Every overdue reminder, oldest first, under one "Overdue" header; they're left out
+        // of the day sections below.
+        let overdue = days.contains(today)
+            ? reminders.filter { $0.isOverdue(now: now, calendar: calendar) }.sorted { ($0.due ?? .distantPast) < ($1.due ?? .distantPast) }
+            : []
+        if !overdue.isEmpty {
+            sections.append(AgendaSection(title: overdueTitle, entries: overdue.map(AgendaEntry.reminder)))
         }
+        let pending = reminders.filter { !$0.isOverdue(now: now, calendar: calendar) }
 
         for day in days {
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { continue }
             let interval = DateInterval(start: day, end: next)
-            let dayReminders = reminders
+            let dayReminders = pending
                 .filter { reminder in reminder.due.map { interval.contains($0) && $0 < next } ?? false }
                 .sorted { ($0.due ?? .distantPast) < ($1.due ?? .distantPast) }
             let dayEvents = events.filter { $0.overlaps(interval) }.sorted(by: eventOrder)
@@ -106,14 +101,19 @@ public enum Agenda {
 
             guard !entries.isEmpty else { continue }
             let title = sectionTitle(for: day, now: now, calendar: calendar, locale: locale)
-            // A day whose title matches an overdue section joins it instead of repeating it.
-            if let index = sections.firstIndex(where: { $0.title == title }) {
-                sections[index] = AgendaSection(title: title, entries: sections[index].entries + entries)
-            } else {
-                sections.append(AgendaSection(title: title, entries: entries))
-            }
+            sections.append(AgendaSection(title: title, entries: entries))
         }
         return sections
+    }
+
+    public static var overdueTitle: String { String(localized: "Overdue") }
+
+    /// The next event today that hasn't started yet, for the "Next up" card. Declined and
+    /// cancelled events are skipped, as are all-day ones.
+    public static func nextUp(events: [CalendarEvent], now: Date, calendar: Calendar = .current) -> CalendarEvent? {
+        events
+            .filter { !$0.isAllDay && !$0.isDeclined && !$0.isCancelled && $0.start > now && calendar.isDate($0.start, inSameDayAs: now) }
+            .min(by: eventOrder)
     }
 
     private static func eventOrder(_ a: CalendarEvent, _ b: CalendarEvent) -> Bool {

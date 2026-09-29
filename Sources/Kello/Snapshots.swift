@@ -20,7 +20,8 @@ enum Snapshots {
         let weekNumbersStore = SettingsStore(settings: weekNumbers)
 
         let calendars = CalendarStore(eventsAccess: .granted, remindersAccess: .granted,
-                                      events: SampleData.events(now: .now), calendars: SampleData.calendars)
+                                      events: SampleData.events(now: .now), calendars: SampleData.calendars,
+                                      reminders: SampleData.reminders(now: .now), reminderLists: SampleData.lists)
         let unasked = CalendarStore(eventsAccess: .notDetermined, remindersAccess: .notDetermined)
         let denied = CalendarStore(eventsAccess: .granted, remindersAccess: .denied)
         let deniedEvents = CalendarStore(eventsAccess: .denied, remindersAccess: .notDetermined)
@@ -42,6 +43,11 @@ enum Snapshots {
                         .environment(calendars), name: "editor-light", dark: false, dir: dir)
         snapPopover(EventEditorView(draft: .new(on: .now, now: .now, calendarID: "work"), onClose: {}).padding(12).frame(width: 308)
                         .environment(calendars), name: "editor-new-dark", dark: true, dir: dir)
+        var remindersTab = Settings()
+        remindersTab.listTab = .reminders
+        snapPopover(popover(SettingsStore(settings: remindersTab), calendars), name: "popover-reminders-light", dark: false, dir: dir)
+        snapPopover(ReminderEditorView(draft: ReminderDraft(SampleData.reminders(now: .now)[0]), onClose: {}).padding(12).frame(width: 308)
+                        .environment(calendars), name: "reminder-editor-light", dark: false, dir: dir)
         print("Snapshots written to \(dir.path)")
         return 0
     }
@@ -149,6 +155,25 @@ private enum SampleData {
         CalendarInfo(id: "gym", title: "Training", sourceTitle: "Google", color: ItemColor(red: 0.2, green: 0.75, blue: 0.4), isWritable: true),
         CalendarInfo(id: "holidays", title: "Holidays", sourceTitle: "Other", color: ItemColor(red: 0.6, green: 0.4, blue: 0.9), isWritable: false),
     ]
+
+    static let lists = [
+        CalendarInfo(id: "todo", title: "To Do", sourceTitle: "iCloud", color: ItemColor(red: 0.2, green: 0.5, blue: 1), isWritable: true),
+        CalendarInfo(id: "errands", title: "Errands", sourceTitle: "iCloud", color: ItemColor(red: 1, green: 0.6, blue: 0.1), isWritable: true),
+    ]
+
+    static func reminders(now: Date) -> [ReminderItem] {
+        let today = Calendar.current.startOfDay(for: now)
+        func day(_ offset: Int, hour: Int? = nil) -> Date {
+            Calendar.current.date(byAdding: DateComponents(day: offset, hour: hour ?? 0), to: today)!
+        }
+        let todo = lists[0].color, errands = lists[1].color
+        return [
+            ReminderItem(id: "1", listID: "todo", title: "Renew passport", due: day(-26, hour: 10), hasDueTime: true, priority: 1, color: todo),
+            ReminderItem(id: "2", listID: "errands", title: "Return library books", due: day(-3), hasDueTime: false, color: errands),
+            ReminderItem(id: "3", listID: "todo", title: "Send invoice", due: day(0, hour: 8), hasDueTime: true, color: todo),
+            ReminderItem(id: "4", listID: "errands", title: "Buy flowers", due: day(0, hour: 23), hasDueTime: true, color: errands),
+        ]
+    }
 
     static func events(now: Date) -> [CalendarEvent] {
         let calendar = Calendar.current
