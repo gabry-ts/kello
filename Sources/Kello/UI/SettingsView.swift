@@ -22,6 +22,7 @@ struct SettingsView: View {
         case notifications
         case menuBar
         case timeZones
+        case about
 
         var title: String {
             switch self {
@@ -30,6 +31,7 @@ struct SettingsView: View {
             case .notifications: "Notifications"
             case .menuBar: "Menu Bar"
             case .timeZones: "Time Zones"
+            case .about: "About"
             }
         }
 
@@ -40,6 +42,7 @@ struct SettingsView: View {
             case .notifications: "bell.badge.fill"
             case .menuBar: "menubar.rectangle"
             case .timeZones: "globe"
+            case .about: "info"
             }
         }
 
@@ -51,6 +54,7 @@ struct SettingsView: View {
             case .notifications: .orange
             case .menuBar: .blue
             case .timeZones: .indigo
+            case .about: .teal
             }
         }
     }
@@ -94,6 +98,7 @@ struct SettingsView: View {
         case .notifications: NotificationsSettingsView()
         case .menuBar: MenuBarSettingsView()
         case .timeZones: TimeZonesSettingsView()
+        case .about: AboutView()
         }
     }
 }

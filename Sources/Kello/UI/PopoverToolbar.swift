@@ -57,6 +57,7 @@ struct PopoverToolbar: View {
                     Divider()
                     Button("Settings…", action: openSettings)
                         .keyboardShortcut(",")
+                    Button("Buy Me a Coffee…") { ExternalLinks.openBuyMeACoffee() }
                     Button("Quit Kello") { NSApplication.shared.terminate(nil) }
                         .keyboardShortcut("q")
                 } label: {

@@ -50,15 +50,12 @@ struct GeneralView: View {
                 Text("Opens the calendar from any app.")
                     .foregroundStyle(.secondary)
             }
-            Section {
-                LabeledContent("Version", value: AppVersion.string)
-            }
         }
         .formStyle(.grouped)
     }
 }
 
-/// The version and build shown in General, read from the app's own bundle.
+/// The version and build shown in About, read from the app's own bundle.
 enum AppVersion {
     static var string: String {
         let short = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"

@@ -44,6 +44,8 @@ enum Theme {
     /// The sun and moon on the extra clocks.
     static let daytime = Color.orange
     static let nighttime = Color.indigo
+    /// The Buy Me a Coffee button, in that site's own yellow.
+    static let coffee = Color(red: 1, green: 0.87, blue: 0)
 
     /// A color made a touch deeper in light mode, so pale calendar colors still read as text.
     static func legible(_ color: Color, _ scheme: ColorScheme) -> Color {
