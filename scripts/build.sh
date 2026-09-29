@@ -18,9 +18,10 @@ if [[ -f "$ROOT/Resources/AppIcon.icns" ]]; then
     cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 fi
 
-# SwiftPM resource bundles (from a target's declared `resources`) land next to the binary;
-# copy every one of them into the app so Bundle.module can find them at runtime. None
-# exist yet, so this is a no-op for now.
+# SwiftPM resource bundles (from a target's declared `resources`, like KeyboardShortcuts'
+# localizations) land next to the binary. Bundle.module looks for them at the app's root,
+# which codesign rejects, so they go in Contents/Resources, where ResourceBundles.swift
+# points the lookup. They hold no code and are sealed with the app's own signature.
 shopt -s nullglob
 for bundle in "$BIN_DIR"/*.bundle; do
     ditto "$bundle" "$APP/Contents/Resources/$(basename "$bundle")"

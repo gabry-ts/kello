@@ -6,6 +6,7 @@ struct KelloApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
+        ResourceBundles.redirectToResources()
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--render-snapshots"), args.indices.contains(i + 1) {
             exit(MainActor.assumeIsolated { Snapshots.render(to: URL(fileURLWithPath: args[i + 1])) })
@@ -47,6 +48,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         } render: { [store] in
             store.settings.menuBarTitle(now: .now)
         }
+
+        Hotkey.register { [weak self] in self?.statusItem?.togglePopover() }
 
         Task { await calendars.requestAccessIfNeeded() }
     }

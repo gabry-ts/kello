@@ -1,4 +1,5 @@
 import KelloCore
+import KeyboardShortcuts
 import SwiftUI
 
 struct GeneralView: View {
@@ -17,6 +18,16 @@ struct GeneralView: View {
                 Toggle("Show week numbers", isOn: $store.settings.showWeekNumbers)
             } header: {
                 Text("Calendar")
+            }
+            Section {
+                KeyboardShortcuts.Recorder(for: .togglePopover) {
+                    Text("Show or hide Kello")
+                }
+            } header: {
+                Text("Keyboard Shortcut")
+            } footer: {
+                Text("Opens the calendar from any app.")
+                    .foregroundStyle(.secondary)
             }
             Section {
                 LabeledContent("Version", value: AppVersion.string)

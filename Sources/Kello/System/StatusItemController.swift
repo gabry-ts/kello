@@ -83,16 +83,31 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     }
 
     @objc private func toggle() {
-        guard let button = item.button else { return }
         if popover.isShown {
             popover.performClose(nil)
         } else {
-            let host = NSHostingController(rootView: makeContent())
-            host.sizingOptions = .preferredContentSize
-            popover.contentViewController = host
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
+            showPopover()
         }
+    }
+
+    /// Opens or closes the popover from the global shortcut. The app is activated first,
+    /// since nothing else made it frontmost, so the popover takes keyboard focus.
+    func togglePopover() {
+        if popover.isShown {
+            popover.performClose(nil)
+        } else {
+            NSApp.activate()
+            showPopover()
+        }
+    }
+
+    private func showPopover() {
+        guard let button = item.button else { return }
+        let host = NSHostingController(rootView: makeContent())
+        host.sizingOptions = .preferredContentSize
+        popover.contentViewController = host
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.makeKey()
     }
 
     func popoverDidClose(_ notification: Notification) {

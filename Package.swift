@@ -5,6 +5,9 @@ let package = Package(
     name: "Kello",
     defaultLocalization: "en",
     platforms: [.macOS(.v26)],
+    dependencies: [
+        .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "2.4.0"),
+    ],
     targets: [
         .target(
             name: "KelloCore",
@@ -14,6 +17,7 @@ let package = Package(
             name: "Kello",
             dependencies: [
                 "KelloCore",
+                .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ],
             path: "Sources/Kello"
         ),
