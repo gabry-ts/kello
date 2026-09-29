@@ -49,7 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 .environment(popoverState)
             )
         } render: { [store] in
-            store.settings.menuBarTitle(now: .now)
+            StatusTitle(text: store.settings.menuBarTitle(now: .now), size: store.settings.menuBar.textSize)
         }
 
         Hotkey.register { [weak self] in self?.statusItem?.togglePopover() }

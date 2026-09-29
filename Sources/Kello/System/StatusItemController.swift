@@ -13,6 +13,12 @@ final class PopoverState {
     var requestedDay: Date?
 }
 
+/// What the menu bar item draws: the formatted date and the point size to draw it at.
+struct StatusTitle: Equatable {
+    var text: String
+    var size: Double
+}
+
 /// The menu bar item and its popover. Managed directly instead of through MenuBarExtra,
 /// which does not reliably redraw its label, so the title updates on every change.
 @MainActor
@@ -20,14 +26,14 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let popover = NSPopover()
     private let makeContent: () -> AnyView
-    private let render: () -> String
+    private let render: () -> StatusTitle
     private let state: PopoverState
-    private var shown: String?
+    private var shown: StatusTitle?
     private var minuteTimer: Timer?
 
     /// The popover's view is built on open and dropped on close, so nothing in it keeps
     /// running while it's hidden.
-    init(state: PopoverState, content: @escaping () -> AnyView, render: @escaping () -> String) {
+    init(state: PopoverState, content: @escaping () -> AnyView, render: @escaping () -> StatusTitle) {
         self.state = state
         self.makeContent = content
         self.render = render
@@ -57,7 +63,10 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         // Rebuilding the title only when it changes avoids needless relayout.
         guard title != shown else { return }
         shown = title
-        button.title = title
+        // Drawn at a medium weight like the system clock, at the size chosen in settings.
+        button.attributedTitle = NSAttributedString(string: title.text, attributes: [
+            .font: NSFont.systemFont(ofSize: title.size, weight: .medium),
+        ])
         button.setAccessibilityLabel("Kello")
     }
 

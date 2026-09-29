@@ -204,16 +204,6 @@
         }
       }
     },
-    "A date formatter template. Leave empty to use the toggles above." : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un modello di formato per la data. Lascialo vuoto per usare le opzioni qui sopra."
-          }
-        }
-      }
-    },
     "A heads-up shortly before your meetings start." : {
       "localizations" : {
         "it" : {
@@ -614,6 +604,16 @@
         }
       }
     },
+    "Drag to change the order. Ignored while a custom pattern is set below." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina per cambiare l'ordine. Ignorato se imposti un formato personalizzato qui sotto."
+          }
+        }
+      }
+    },
     "Drag to reorder. Leave a label empty to show the city." : {
       "localizations" : {
         "it" : {
@@ -800,16 +800,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Come è organizzato il calendario nel pannello della barra dei menu."
-          }
-        }
-      }
-    },
-    "Ignored while a custom pattern is set below." : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ignorate se qui sotto è impostato un formato personalizzato."
           }
         }
       }
@@ -1284,6 +1274,16 @@
         }
       }
     },
+    "Pattern" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formato"
+          }
+        }
+      }
+    },
     "Press Return to add" : {
       "localizations" : {
         "it" : {
@@ -1574,6 +1574,16 @@
         }
       }
     },
+    "Text Size" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dimensione testo"
+          }
+        }
+      }
+    },
     "This Event Only" : {
       "localizations" : {
         "it" : {
@@ -1674,6 +1684,16 @@
         }
       }
     },
+    "Used exactly as written: EEE weekday, d day, MMM month, yyyy year, HH:mm time. Leave empty to use the list above." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usato così come lo scrivi: EEE giorno della settimana, d giorno, MMM mese, yyyy anno, HH:mm ora. Lascia vuoto per usare l'elenco sopra."
+          }
+        }
+      }
+    },
     "Version %@" : {
       "localizations" : {
         "it" : {
@@ -1720,16 +1740,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anno"
-          }
-        }
-      }
-    },
-    "e.g. EEE d MMM HH:mm" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ad es. EEE d MMM HH:mm"
           }
         }
       }
