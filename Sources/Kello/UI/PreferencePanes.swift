@@ -7,6 +7,7 @@ struct GeneralView: View {
     var body: some View {
         @Bindable var store = store
         Form {
+            PaneHeader(pane: .general, subtitle: "How the calendar in the menu bar popover is laid out.")
             Section {
                 Picker("First day of the week", selection: $store.settings.firstWeekday) {
                     Text("System Default").tag(FirstWeekday.system)

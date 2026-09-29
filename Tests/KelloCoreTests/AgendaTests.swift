@@ -120,6 +120,9 @@ final class AgendaTests: XCTestCase {
         let timed = AgendaFormat.timeRange(start: date(29, 11), end: date(29, 11, 30), isAllDay: false, calendar: calendar, locale: locale)
         XCTAssertTrue(timed.hasPrefix("11:00"), timed)
         XCTAssertTrue(timed.hasSuffix("11:30\u{202F}AM (GMT)"), timed)
+        let compact = AgendaFormat.timeRange(start: date(29, 11), end: date(29, 11, 30), isAllDay: false, showsTimeZone: false,
+                                             calendar: calendar, locale: locale)
+        XCTAssertTrue(compact.hasSuffix("11:30\u{202F}AM"), compact)
         let span = AgendaFormat.timeRange(start: date(29, 0), end: date(2, 0, month: 10), isAllDay: true, calendar: calendar, locale: locale)
         XCTAssertTrue(span.contains("Sep 29") && span.contains("Oct 1"), span)
     }

@@ -8,29 +8,33 @@ struct CalendarsSettingsView: View {
 
     var body: some View {
         Form {
+            PaneHeader(pane: .calendars, subtitle: "Choose which calendars and reminder lists appear in the menu bar.")
             if calendars.eventsAccess != .granted {
                 Section {
                     Text("Allow Kello to access your calendars to choose which ones to show.")
                         .foregroundStyle(.secondary)
                     Button("Open Privacy Settings…") { calendars.openPrivacySettings(for: .event) }
+                        .buttonStyle(.glass)
                 }
             }
-            ForEach(CalendarGroup.grouped(calendars.eventCalendars)) { group in
-                Section(group.sourceTitle) {
-                    ForEach(group.calendars) { calendar in
+            // Calendars and reminder lists can share an account name, so each section is
+            // keyed by kind as well.
+            ForEach(sections, id: \.id) { section in
+                Section(section.title) {
+                    ForEach(section.calendars) { calendar in
                         CalendarToggle(calendar: calendar)
-                    }
-                }
-            }
-            ForEach(CalendarGroup.grouped(calendars.reminderLists)) { group in
-                Section(String(localized: "Reminders · \(group.sourceTitle)")) {
-                    ForEach(group.calendars) { list in
-                        CalendarToggle(calendar: list)
                     }
                 }
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var sections: [(id: String, title: String, calendars: [CalendarInfo])] {
+        CalendarGroup.grouped(calendars.eventCalendars).map { ("e|\($0.id)", $0.sourceTitle, $0.calendars) }
+            + CalendarGroup.grouped(calendars.reminderLists).map {
+                ("r|\($0.id)", String(localized: "Reminders · \($0.sourceTitle)"), $0.calendars)
+            }
     }
 }
 
@@ -44,10 +48,11 @@ struct CalendarToggle: View {
             get: { store.settings.isCalendarVisible(calendar.id) },
             set: { store.settings.setCalendar(calendar.id, visible: $0) }
         )) {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Circle()
-                    .fill(Color(calendar.color))
-                    .frame(width: 10, height: 10)
+                    .fill(Color(calendar.color).gradient)
+                    .frame(width: 12, height: 12)
+                    .overlay(Circle().strokeBorder(.black.opacity(0.08), lineWidth: 0.5))
                 Text(calendar.title)
             }
         }

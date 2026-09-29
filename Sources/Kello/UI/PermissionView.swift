@@ -7,43 +7,48 @@ struct PermissionView: View {
     @Environment(CalendarStore.self) private var calendars
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 30, weight: .regular))
+                .font(.system(size: 24, weight: .medium))
                 .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.tint)
+                .foregroundStyle(.white)
+                .frame(width: 52, height: 52)
+                .background(Color.accentColor.gradient, in: .rect(cornerRadius: 14, style: .continuous))
+                .shadow(color: .accentColor.opacity(0.35), radius: 8, y: 3)
             VStack(spacing: 4) {
                 Text("Connect Your Calendars")
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .semibold))
                 Text("Kello shows your events and reminders right from the menu bar. Everything stays on this Mac.")
-                    .font(.callout)
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, 8)
             VStack(spacing: 0) {
                 row("Calendars", systemImage: "calendar", access: calendars.eventsAccess, type: .event)
-                Divider().padding(.leading, 32)
+                Hairline(leading: 44)
                 row("Reminders", systemImage: "checklist", access: calendars.remindersAccess, type: .reminder)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 2)
-            .background(.primary.opacity(0.04), in: .rect(cornerRadius: 10, style: .continuous))
+            .surface(radius: Theme.groupRadius)
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 10)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
     }
 
     private func row(_ title: LocalizedStringKey, systemImage: String, access: CalendarStore.Access, type: EKEntityType) -> some View {
         HStack(spacing: 10) {
             Image(systemName: systemImage)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.tint)
                 .frame(width: 22)
             Text(title)
+                .font(.system(size: 13, weight: .medium))
             Spacer()
             switch access {
             case .granted:
                 Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 16))
                     .foregroundStyle(.green)
                     .transition(.scale.combined(with: .opacity))
             case .notDetermined:
@@ -59,7 +64,8 @@ struct PermissionView: View {
             }
         }
         .controlSize(.small)
-        .frame(height: 36)
+        .padding(.horizontal, 12)
+        .frame(height: 44)
         .animation(.snappy, value: access)
     }
 }

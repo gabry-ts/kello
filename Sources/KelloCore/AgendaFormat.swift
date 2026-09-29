@@ -19,8 +19,9 @@ public enum AgendaFormat {
     }
 
     /// "11:00 – 11:30 AM (GMT+2)", or "All day". Events spanning several days show their
-    /// dates as well.
-    public static func timeRange(start: Date, end: Date, isAllDay: Bool, calendar: Calendar = .current, locale: Locale = .current) -> String {
+    /// dates as well. Compact rows leave the time zone out.
+    public static func timeRange(start: Date, end: Date, isAllDay: Bool, showsTimeZone: Bool = true,
+                                 calendar: Calendar = .current, locale: Locale = .current) -> String {
         if isAllDay {
             let lastDay = calendar.date(byAdding: .day, value: -1, to: end) ?? end
             guard end > start, !calendar.isDate(start, inSameDayAs: lastDay) else { return String(localized: "All day") }
@@ -32,6 +33,7 @@ public enum AgendaFormat {
             style = style.day().month(.abbreviated)
         }
         let range = (start..<max(start, end)).formatted(style)
+        guard showsTimeZone else { return range }
         let zone = start.formatted(Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone).timeZone(.localizedGMT(.short)))
         return "\(range) (\(zone))"
     }

@@ -1,9 +1,36 @@
 import KelloCore
 import SwiftUI
 
-/// A borderless SF Symbol button that shows a soft rounded highlight on hover and press.
+/// A round Liquid Glass button face for an SF Symbol, used by plain buttons and menus
+/// alike, which is why it's a label rather than a button style.
+struct GlassCircle: View {
+    let systemImage: String
+    var isActive = false
+    var size: CGFloat = Theme.controlSize
+    @Environment(\.isEnabled) private var isEnabled
+    @State private var isHovered = false
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary.opacity(isEnabled ? 0.8 : 0.3)))
+            .contentTransition(.symbolEffect(.replace))
+            .frame(width: size, height: size)
+            .background {
+                Circle().fill(.primary.opacity(isHovered && isEnabled ? 0.06 : 0))
+            }
+            .glassEffect(isActive ? .regular.tint(.accentColor.opacity(0.18)).interactive() : .regular.interactive(), in: .circle)
+            .glassEdge(Circle())
+            .contentShape(.circle)
+            .onHover { isHovered = $0 }
+            .animation(Theme.hover, value: isHovered)
+    }
+}
+
+/// A plain SF Symbol button with a soft round highlight on hover and press, for places
+/// inside a glass control where another glass layer would be too much.
 struct IconButtonStyle: ButtonStyle {
-    var size: CGFloat = 24
+    var size: CGFloat = 28
 
     func makeBody(configuration: Configuration) -> some View {
         IconButtonBody(configuration: configuration, size: size)
@@ -17,16 +44,15 @@ struct IconButtonStyle: ButtonStyle {
 
         var body: some View {
             configuration.label
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(isEnabled ? .secondary : .tertiary)
-                .frame(width: size, height: size)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.primary.opacity(isEnabled ? 0.8 : 0.3))
+                .frame(minWidth: size, minHeight: size)
                 .background {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(.primary.opacity(configuration.isPressed ? 0.14 : (isHovered && isEnabled ? 0.08 : 0)))
+                    Capsule().fill(.primary.opacity(configuration.isPressed ? 0.12 : (isHovered && isEnabled ? 0.07 : 0)))
                 }
-                .contentShape(.rect)
+                .contentShape(.capsule)
                 .onHover { isHovered = $0 }
-                .animation(.easeOut(duration: 0.12), value: isHovered)
+                .animation(Theme.hover, value: isHovered)
         }
     }
 }
@@ -37,23 +63,24 @@ extension ButtonStyle where Self == IconButtonStyle {
 
 /// Tracks the pointer over a view, for row and cell hover highlights.
 struct HoverHighlight: ViewModifier {
-    var cornerRadius: CGFloat = 6
-    var opacity: Double = 0.06
+    var cornerRadius: CGFloat = Theme.rowRadius
+    var opacity: Double = 0.05
     @State private var isHovered = false
 
     func body(content: Content) -> some View {
         content
-            .background {
+            .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(.primary.opacity(isHovered ? opacity : 0))
+                    .allowsHitTesting(false)
             }
             .onHover { isHovered = $0 }
-            .animation(.easeOut(duration: 0.12), value: isHovered)
+            .animation(Theme.hover, value: isHovered)
     }
 }
 
 extension View {
-    func hoverHighlight(cornerRadius: CGFloat = 6, opacity: Double = 0.06) -> some View {
+    func hoverHighlight(cornerRadius: CGFloat = Theme.rowRadius, opacity: Double = 0.05) -> some View {
         modifier(HoverHighlight(cornerRadius: cornerRadius, opacity: opacity))
     }
 }

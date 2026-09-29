@@ -13,56 +13,49 @@ struct PopoverToolbar: View {
     var newReminder: (() -> Void)?
 
     var body: some View {
-        @Bindable var store = store
         @Bindable var popover = popover
-        HStack(spacing: 2) {
-            if calendars.remindersAccess == .granted {
-                Picker("", selection: $store.settings.listTab) {
-                    Text("Agenda").tag(ListTab.agenda)
-                    Text("Reminders").tag(ListTab.reminders)
+        GlassEffectContainer(spacing: 8) {
+            HStack(spacing: 8) {
+                if calendars.remindersAccess == .granted {
+                    TabSwitch(selection: Bindable(store).settings.listTab)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
-                .controlSize(.small)
-            }
-            Spacer()
-            Button { popover.isPinned.toggle() } label: {
-                Image(systemName: popover.isPinned ? "pin.fill" : "pin")
-            }
-            .help(popover.isPinned ? "Unpin" : "Keep Open")
-            Menu {
-                Button("New Event") { newEvent?() }
-                    .disabled(newEvent == nil)
-                Button("New Reminder") { newReminder?() }
-                    .disabled(newReminder == nil)
-            } label: {
-                Image(systemName: "plus")
+                Spacer(minLength: 0)
+                Button { popover.isPinned.toggle() } label: {
+                    GlassCircle(systemImage: popover.isPinned ? "pin.fill" : "pin", isActive: popover.isPinned)
+                }
+                .help(popover.isPinned ? "Unpin" : "Keep Open")
+                Menu {
+                    Button("New Event") { newEvent?() }
+                        .disabled(newEvent == nil)
+                    Button("New Reminder") { newReminder?() }
+                        .disabled(newReminder == nil)
+                } label: {
+                    GlassCircle(systemImage: "plus")
+                }
+                .disabled(newEvent == nil && newReminder == nil)
+                .help("New")
+                Menu {
+                    Toggle("Show Upcoming Days", isOn: Binding(
+                        get: { store.settings.agendaMode == .upcoming },
+                        set: { store.settings.agendaMode = $0 ? .upcoming : .day }))
+                    if calendars.eventsAccess == .granted {
+                        CalendarVisibilityMenu()
+                    }
+                    Divider()
+                    Button("Settings…", action: openSettings)
+                        .keyboardShortcut(",")
+                    Button("Quit Kello") { NSApplication.shared.terminate(nil) }
+                        .keyboardShortcut("q")
+                } label: {
+                    GlassCircle(systemImage: "ellipsis")
+                }
+                .help("More")
             }
             .menuStyle(.button)
             .menuIndicator(.hidden)
-            .disabled(newEvent == nil && newReminder == nil)
-            .help("New")
-            Menu {
-                Toggle("Show Upcoming Days", isOn: Binding(
-                    get: { store.settings.agendaMode == .upcoming },
-                    set: { store.settings.agendaMode = $0 ? .upcoming : .day }))
-                if calendars.eventsAccess == .granted {
-                    CalendarVisibilityMenu()
-                }
-                Divider()
-                Button("Settings…", action: openSettings)
-                    .keyboardShortcut(",")
-                Button("Quit Kello") { NSApplication.shared.terminate(nil) }
-                    .keyboardShortcut("q")
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
-            .menuStyle(.button)
-            .menuIndicator(.hidden)
-            .help("More")
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.icon)
+        .frame(height: Theme.controlSize + 4)
         // Menu items only answer their shortcuts while the menu is open, so these do it
         // for the popover as a whole.
         .background {
@@ -72,33 +65,84 @@ struct PopoverToolbar: View {
     }
 }
 
-/// "Overdue: N" and "Today: N", each after small bars in the colors involved.
+/// The Agenda / Reminders switch: a glass capsule with the selected segment raised.
+private struct TabSwitch: View {
+    @Binding var selection: ListTab
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var namespace
+
+    var body: some View {
+        HStack(spacing: 2) {
+            segment("Agenda", tab: .agenda)
+            segment("Reminders", tab: .reminders)
+        }
+        .padding(3)
+        .glassEffect(.regular, in: .capsule)
+        .glassEdge(Capsule())
+    }
+
+    private func segment(_ title: LocalizedStringKey, tab: ListTab) -> some View {
+        let isSelected = selection == tab
+        return Button {
+            withAnimation(Theme.spring(reduceMotion)) { selection = tab }
+        } label: {
+            Text(title)
+                .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                .foregroundStyle(isSelected ? .primary : .secondary)
+                .fixedSize()
+                .padding(.horizontal, 12)
+                .frame(height: Theme.segmentHeight)
+                .background {
+                    if isSelected {
+                        Capsule()
+                            .fill(colorScheme == .dark ? Color.white.opacity(0.16) : Color.white)
+                            .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.10), radius: 3, y: 1)
+                            .matchedGeometryEffect(id: "selection", in: namespace)
+                    }
+                }
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+/// Today at a glance: overdue reminders and today's events, each a small chip led by the
+/// colors involved.
 struct StatusRow: View {
     let status: AgendaStatus
     let showsOverdue: Bool
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 6) {
             if showsOverdue {
-                item(String(localized: "Overdue: \(status.overdueCount)"), colors: [.accentColor])
+                chip(count: status.overdueCount, label: "overdue", colors: status.overdueCount > 0 ? [.red] : [])
             }
-            item(String(localized: "Today: \(status.todayCount)"), colors: status.todayColors.prefix(6).map(Color.init))
-            Spacer()
+            chip(count: status.todayCount, label: "today", colors: status.todayColors.prefix(5).map(Color.init))
+            Spacer(minLength: 0)
         }
-        .font(.system(size: 11, weight: .medium))
-        .monospacedDigit()
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 6)
     }
 
-    private func item(_ text: String, colors: [Color]) -> some View {
-        HStack(spacing: 5) {
+    private func chip(count: Int, label: LocalizedStringKey, colors: [Color]) -> some View {
+        HStack(spacing: 6) {
             HStack(spacing: 2) {
-                ForEach(Array((colors.isEmpty ? [.secondary.opacity(0.4)] : colors).enumerated()), id: \.offset) { _, color in
-                    Capsule().fill(color).frame(width: 3, height: 11)
+                ForEach(Array((colors.isEmpty ? [.secondary.opacity(0.35)] : colors).enumerated()), id: \.offset) { _, color in
+                    Capsule().fill(color).frame(width: 3, height: 10)
                 }
             }
-            Text(text)
+            HStack(spacing: 3) {
+                Text("\(count)")
+                    .font(.system(size: 11.5, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+                Text(label)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(.secondary)
+            }
         }
+        .padding(.horizontal, 9)
+        .frame(height: 22)
+        .surface(radius: 11, elevated: false)
     }
 }

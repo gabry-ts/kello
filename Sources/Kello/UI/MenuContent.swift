@@ -15,6 +15,7 @@ struct MenuContent: View {
     @Environment(CalendarStore.self) private var calendars
     @State private var viewModel = MonthGridViewModel()
     @State private var route: EditorRoute?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var calendar: Calendar { .current }
 
@@ -22,20 +23,19 @@ struct MenuContent: View {
         ZStack(alignment: .top) {
             if let route {
                 editor(route)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
             } else {
                 // Redrawn every minute so the "now" marker, past events and counts stay current.
                 TimelineView(.everyMinute) { context in
                     content(now: context.date)
                 }
-                .transition(.move(edge: .leading).combined(with: .opacity))
+                .transition(reduceMotion ? .opacity : .move(edge: .leading).combined(with: .opacity))
             }
         }
-        .animation(.smooth(duration: 0.25), value: route)
+        .animation(Theme.spring(reduceMotion), value: route)
         // Reminders only come asynchronously, so they're fetched again on every change.
         .task(id: calendars.revision) { await calendars.loadReminders() }
-        .padding(12)
-        .frame(width: 308)
+        .popoverFrame()
         .onAppear { calendars.refreshAccess() }
     }
 
@@ -52,13 +52,12 @@ struct MenuContent: View {
         let canReadEvents = calendars.eventsAccess == .granted
         let canReadReminders = calendars.remindersAccess == .granted
 
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: Theme.spacing) {
             MonthGridView(
                 viewModel: viewModel,
                 dots: AgendaFormat.dotColors(days: gridDays, events: gridEvents).mapValues { $0.map(Color.init) },
                 onDoubleClick: canReadEvents ? { newEvent(on: $0, now: now) } : nil)
             if calendars.needsPermissionPrompt {
-                Divider()
                 PermissionView()
             }
             PopoverToolbar(
@@ -75,6 +74,7 @@ struct MenuContent: View {
                     sections: Agenda.sections(days: days, events: [], reminders: reminders, now: now),
                     now: now,
                     emptyText: "No Reminders",
+                    emptyImage: "checklist.checked",
                     openReminder: { route = .reminder(ReminderDraft($0)) },
                     completeReminder: complete)
             } else if canReadEvents {
@@ -128,5 +128,15 @@ struct MenuContent: View {
         let hidden = store.settings.hiddenCalendarIDs
         return calendars.events(in: DateInterval(start: calendar.startOfDay(for: first), end: end))
             .filter { !hidden.contains($0.calendarID) }
+    }
+}
+
+extension View {
+    /// The popover's width and margins, shared by the agenda and the editors.
+    func popoverFrame() -> some View {
+        padding(.horizontal, Theme.popoverPadding)
+            .padding(.top, 16)
+            .padding(.bottom, Theme.popoverPadding)
+            .frame(width: Theme.popoverWidth)
     }
 }

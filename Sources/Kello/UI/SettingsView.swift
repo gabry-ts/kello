@@ -31,9 +31,18 @@ struct SettingsView: View {
 
         var icon: String {
             switch self {
-            case .general: "gearshape"
+            case .general: "gearshape.fill"
             case .calendars: "calendar"
             case .menuBar: "menubar.rectangle"
+            }
+        }
+
+        /// The tile color behind the icon, as in System Settings.
+        var tint: Color {
+            switch self {
+            case .general: .gray
+            case .calendars: .red
+            case .menuBar: .blue
             }
         }
     }
@@ -51,8 +60,12 @@ struct SettingsView: View {
     }
 
     private func paneRow(_ pane: Pane) -> some View {
-        Label(pane.title, systemImage: pane.icon)
-            .tag(pane)
+        Label {
+            Text(pane.title)
+        } icon: {
+            IconTile(systemImage: pane.icon, tint: pane.tint, size: 22)
+        }
+        .tag(pane)
     }
 
     @ViewBuilder
@@ -71,6 +84,45 @@ struct SettingsView: View {
         case .general: GeneralView()
         case .calendars: CalendarsSettingsView()
         case .menuBar: MenuBarSettingsView()
+        }
+    }
+}
+
+/// A white SF Symbol on a rounded, gently shaded color tile.
+struct IconTile: View {
+    let systemImage: String
+    let tint: Color
+    var size: CGFloat = 22
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.system(size: size * 0.52, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: size, height: size)
+            .background(tint.gradient, in: .rect(cornerRadius: size * 0.27, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: size * 0.27, style: .continuous).strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
+    }
+}
+
+/// The top of each settings pane: its icon tile, title and a line about it.
+struct PaneHeader: View {
+    let pane: SettingsView.Pane
+    let subtitle: LocalizedStringKey
+
+    var body: some View {
+        Section {
+            HStack(spacing: 12) {
+                IconTile(systemImage: pane.icon, tint: pane.tint, size: 40)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(pane.title)
+                        .font(.system(size: 15, weight: .semibold))
+                    Text(subtitle)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.vertical, 4)
         }
     }
 }

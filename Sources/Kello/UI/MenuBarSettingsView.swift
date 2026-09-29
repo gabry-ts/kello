@@ -9,6 +9,7 @@ struct MenuBarSettingsView: View {
     var body: some View {
         @Bindable var store = store
         Form {
+            PaneHeader(pane: .menuBar, subtitle: "What the date and time in the menu bar show.")
             Section {
                 preview
             }
@@ -44,8 +45,11 @@ struct MenuBarSettingsView: View {
             Text("Preview")
             Spacer()
             Text(MenuBarFormat.string(for: .now, settings: store.settings.menuBar))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 13, weight: .medium))
                 .monospacedDigit()
+                .padding(.horizontal, 10)
+                .frame(height: 24)
+                .glassEffect(.regular, in: .capsule)
         }
     }
 }

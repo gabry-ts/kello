@@ -36,18 +36,25 @@ enum Snapshots {
         var hidden = Settings()
         hidden.hiddenCalendarIDs = ["work"]
         snapPopover(popover(SettingsStore(settings: hidden), calendars), name: "popover-hidden-work-light", dark: false, dir: dir)
-        snapWindow(SettingsView(navigation: Navigation(pane: .calendars)).environment(SettingsStore(settings: hidden)).environment(calendars),
-                   name: "settings-calendars-light", dark: false, dir: dir)
+        for dark in [false, true] {
+            for pane in SettingsView.Pane.allCases {
+                snapWindow(SettingsView(navigation: Navigation(pane: pane)).environment(SettingsStore(settings: hidden)).environment(calendars),
+                           name: "settings-\(pane.rawValue)-\(dark ? "dark" : "light")", dark: dark, dir: dir)
+            }
+        }
         let sampleEvent = SampleData.events(now: .now)[0]
-        snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).padding(12).frame(width: 308)
+        snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).popoverFrame()
                         .environment(calendars), name: "editor-light", dark: false, dir: dir)
-        snapPopover(EventEditorView(draft: .new(on: .now, now: .now, calendarID: "work"), onClose: {}).padding(12).frame(width: 308)
+        snapPopover(EventEditorView(draft: .new(on: .now, now: .now, calendarID: "work"), onClose: {}).popoverFrame()
                         .environment(calendars), name: "editor-new-dark", dark: true, dir: dir)
         var remindersTab = Settings()
         remindersTab.listTab = .reminders
         snapPopover(popover(SettingsStore(settings: remindersTab), calendars), name: "popover-reminders-light", dark: false, dir: dir)
-        snapPopover(ReminderEditorView(draft: ReminderDraft(SampleData.reminders(now: .now)[0]), onClose: {}).padding(12).frame(width: 308)
+        snapPopover(ReminderEditorView(draft: ReminderDraft(SampleData.reminders(now: .now)[0]), onClose: {}).popoverFrame()
                         .environment(calendars), name: "reminder-editor-light", dark: false, dir: dir)
+        snapPopover(popover(SettingsStore(settings: remindersTab), calendars), name: "popover-reminders-dark", dark: true, dir: dir)
+        snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).popoverFrame()
+                        .environment(calendars), name: "editor-dark", dark: true, dir: dir)
         print("Snapshots written to \(dir.path)")
         return 0
     }
@@ -85,17 +92,25 @@ enum Snapshots {
 
     // MARK: Rendering
 
-    /// Renders the view like the popover: on the window background, rounded, over a plain
-    /// desktop-like backdrop. A real offscreen NSPopover can't be used because its glass
-    /// samples what's behind it, which offscreen is nothing.
+    /// Renders the view like the popover: on a stand-in for its glass, rounded, over a
+    /// colorful desktop-like backdrop. A real offscreen NSPopover can't be used because its
+    /// glass samples what's behind it, which offscreen is nothing.
     private static func snapPopover(_ view: some View, name: String, dark: Bool, dir: URL) {
+        let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
         let framed = view
-            .background(Color(nsColor: .windowBackgroundColor))
-            .clipShape(.rect(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.primary.opacity(0.12), lineWidth: 0.5))
-            .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
-            .padding(24)
-            .background(dark ? Color(red: 0.12, green: 0.14, blue: 0.2) : Color(red: 0.78, green: 0.84, blue: 0.92))
+            .background {
+                ZStack {
+                    Wallpaper(dark: dark).blur(radius: 40, opaque: true)
+                    shape.fill(dark ? Color(red: 0.11, green: 0.11, blue: 0.13).opacity(0.72) : Color(red: 0.97, green: 0.97, blue: 0.98).opacity(0.62))
+                    shape.fill(LinearGradient(colors: [Color.white.opacity(dark ? 0.06 : 0.30), .clear], startPoint: .top, endPoint: .center))
+                }
+            }
+            .clipShape(shape)
+            .overlay(shape.strokeBorder(Color.white.opacity(dark ? 0.10 : 0.55), lineWidth: 0.5).padding(0.5))
+            .overlay(shape.strokeBorder(Color.black.opacity(dark ? 0.55 : 0.16), lineWidth: 0.5))
+            .shadow(color: .black.opacity(dark ? 0.5 : 0.25), radius: 20, y: 10)
+            .padding(32)
+            .background(Wallpaper(dark: dark))
         let controller = NSHostingController(rootView: framed)
         let window = NSWindow(contentViewController: controller)
         window.styleMask = [.borderless]
@@ -144,6 +159,31 @@ enum Snapshots {
         let fn = unsafeBitCast(sym, to: Fn.self)
         // kCGWindowListOptionIncludingWindow = 8, boundsIgnoreFraming = 1, bestResolution = 8
         return fn(.null, 8, UInt32(window.windowNumber), 1 | 8)?.takeRetainedValue()
+    }
+}
+
+/// A colorful gradient standing in for the desktop picture behind the popover.
+private struct Wallpaper: View {
+    let dark: Bool
+
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: dark
+                           ? [Color(red: 0.05, green: 0.07, blue: 0.16), Color(red: 0.10, green: 0.13, blue: 0.30), Color(red: 0.18, green: 0.12, blue: 0.30)]
+                           : [Color(red: 0.16, green: 0.27, blue: 0.52), Color(red: 0.30, green: 0.42, blue: 0.70), Color(red: 0.56, green: 0.45, blue: 0.68)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            GeometryReader { proxy in
+                Ellipse().fill(Color(red: 0.20, green: 0.70, blue: 0.85).opacity(dark ? 0.35 : 0.45))
+                    .frame(width: proxy.size.width * 0.9, height: proxy.size.height * 0.4)
+                    .position(x: proxy.size.width * 0.8, y: proxy.size.height * 0.1)
+                    .blur(radius: 70)
+                Ellipse().fill(Color(red: 0.95, green: 0.45, blue: 0.55).opacity(dark ? 0.30 : 0.45))
+                    .frame(width: proxy.size.width * 0.8, height: proxy.size.height * 0.4)
+                    .position(x: proxy.size.width * 0.1, y: proxy.size.height * 0.85)
+                    .blur(radius: 80)
+            }
+        }
+        .compositingGroup()
     }
 }
 
