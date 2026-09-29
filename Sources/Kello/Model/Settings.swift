@@ -1,11 +1,12 @@
 import Foundation
 import KelloCore
 
-/// Everything persisted to disk, as JSON. Month grid preferences are added in a later step.
+/// Everything persisted to disk, as JSON.
 struct Settings: Codable, Hashable {
     var menuBar = MenuBarSettings()
     var firstWeekday = FirstWeekday.system
     var showWeekNumbers = false
+    var agendaMode = AgendaMode.day
 
     init() {}
 
@@ -16,5 +17,6 @@ struct Settings: Codable, Hashable {
         menuBar = try c.decodeIfPresent(MenuBarSettings.self, forKey: .menuBar) ?? d.menuBar
         firstWeekday = try c.decodeIfPresent(FirstWeekday.self, forKey: .firstWeekday) ?? d.firstWeekday
         showWeekNumbers = try c.decodeIfPresent(Bool.self, forKey: .showWeekNumbers) ?? d.showWeekNumbers
+        agendaMode = try c.decodeIfPresent(AgendaMode.self, forKey: .agendaMode) ?? d.agendaMode
     }
 }

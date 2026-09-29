@@ -1,4 +1,5 @@
 import AppKit
+import KelloCore
 import SwiftUI
 
 /// `Kello --render-snapshots <dir>` renders the popover with sample data, in light and
@@ -18,20 +19,28 @@ enum Snapshots {
         weekNumbers.showWeekNumbers = true
         let weekNumbersStore = SettingsStore(settings: weekNumbers)
 
-        let calendars = CalendarStore(eventsAccess: .granted, remindersAccess: .granted)
+        let calendars = CalendarStore(eventsAccess: .granted, remindersAccess: .granted,
+                                      events: SampleData.events(now: .now), calendars: SampleData.calendars)
         let unasked = CalendarStore(eventsAccess: .notDetermined, remindersAccess: .notDetermined)
         let denied = CalendarStore(eventsAccess: .granted, remindersAccess: .denied)
         let deniedEvents = CalendarStore(eventsAccess: .denied, remindersAccess: .notDetermined)
 
         for dark in [false, true] {
             let suffix = dark ? "dark" : "light"
-            snapPopover(MenuContent(openSettings: {}).environment(store).environment(calendars), name: "popover-\(suffix)", dark: dark, dir: dir)
-            snapPopover(MenuContent(openSettings: {}).environment(store).environment(unasked), name: "permission-\(suffix)", dark: dark, dir: dir)
+            snapPopover(popover(store, calendars), name: "popover-\(suffix)", dark: dark, dir: dir)
+            snapPopover(popover(store, unasked), name: "permission-\(suffix)", dark: dark, dir: dir)
         }
-        snapPopover(MenuContent(openSettings: {}).environment(store).environment(deniedEvents), name: "permission-denied-light", dark: false, dir: dir)
-        snapPopover(MenuContent(openSettings: {}).environment(weekNumbersStore).environment(denied), name: "popover-weeknumbers-light", dark: false, dir: dir)
+        snapPopover(popover(store, deniedEvents), name: "permission-denied-light", dark: false, dir: dir)
+        snapPopover(popover(weekNumbersStore, denied), name: "popover-weeknumbers-light", dark: false, dir: dir)
         print("Snapshots written to \(dir.path)")
         return 0
+    }
+
+    private static func popover(_ store: SettingsStore, _ calendars: CalendarStore) -> some View {
+        MenuContent(openSettings: {})
+            .environment(store)
+            .environment(calendars)
+            .environment(PopoverState())
     }
 
     // MARK: Icon
@@ -99,5 +108,46 @@ enum Snapshots {
         let fn = unsafeBitCast(sym, to: Fn.self)
         // kCGWindowListOptionIncludingWindow = 8, boundsIgnoreFraming = 1, bestResolution = 8
         return fn(.null, 8, UInt32(window.windowNumber), 1 | 8)?.takeRetainedValue()
+    }
+}
+
+/// A plausible week of events around today, for snapshots only.
+private enum SampleData {
+    static let calendars = [
+        CalendarInfo(id: "work", title: "Work", sourceTitle: "iCloud", color: ItemColor(red: 0.2, green: 0.5, blue: 1), isWritable: true),
+        CalendarInfo(id: "home", title: "Home", sourceTitle: "iCloud", color: ItemColor(red: 0.95, green: 0.35, blue: 0.3), isWritable: true),
+        CalendarInfo(id: "gym", title: "Training", sourceTitle: "Google", color: ItemColor(red: 0.2, green: 0.75, blue: 0.4), isWritable: true),
+        CalendarInfo(id: "holidays", title: "Holidays", sourceTitle: "Other", color: ItemColor(red: 0.6, green: 0.4, blue: 0.9), isWritable: false),
+    ]
+
+    static func events(now: Date) -> [CalendarEvent] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: now)
+        func at(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
+            calendar.date(byAdding: DateComponents(day: day, hour: hour, minute: minute), to: today)!
+        }
+        func color(_ id: String) -> ItemColor { calendars.first { $0.id == id }!.color }
+        func event(_ title: String, _ calendarID: String, _ start: Date, _ end: Date, allDay: Bool = false, location: String? = nil,
+                   url: URL? = nil, recurring: Bool = false, declined: Bool = false) -> CalendarEvent {
+            CalendarEvent(eventIdentifier: "\(title)\(start)", calendarID: calendarID, title: title, start: start, end: end, isAllDay: allDay,
+                          location: location, url: url, isRecurring: recurring, isDeclined: declined, color: color(calendarID),
+                          meetingURL: MeetingLink.find(in: [url?.absoluteString, location]))
+        }
+        var events = [
+            event("Design review", "work", at(0, 9), at(0, 9, 30), location: "https://meet.google.com/abc-defg-hij", recurring: true),
+            event("Lunch with Sara", "home", at(0, 12, 30), at(0, 13, 30), location: "Trattoria da Mario"),
+            event("Quarterly planning", "work", at(0, 15), at(0, 16), url: URL(string: "https://example.com/plan")),
+            event("Old sync", "work", at(0, 17), at(0, 17, 30), declined: true),
+            event("Running", "gym", at(0, 19), at(0, 20), recurring: true),
+            event("Company offsite", "work", at(1, 0), at(3, 0), allDay: true),
+            event("Dentist", "home", at(2, 10), at(2, 11)),
+        ]
+        for offset in [-9, -6, -2, 4, 8, 11, 15, 18] {
+            events.append(event("Standup", "work", at(offset, 9), at(offset, 9, 15), recurring: true))
+        }
+        for offset in [-5, 5, 12] {
+            events.append(event("Holiday", "holidays", at(offset, 0), at(offset + 1, 0), allDay: true))
+        }
+        return events
     }
 }

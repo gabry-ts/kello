@@ -1,5 +1,6 @@
 import AppKit
 import EventKit
+import KelloCore
 import Observation
 
 /// The one EventKit store the app reads from, with the access state for events and
@@ -23,8 +24,15 @@ final class CalendarStore {
     @ObservationIgnored let eventStore = EKEventStore()
     @ObservationIgnored private var observer: NSObjectProtocol?
     /// False for the store used when rendering offscreen snapshots, which never touches
-    /// the real Calendar database.
+    /// the real Calendar database and serves the sample items below instead.
     @ObservationIgnored private let isLive: Bool
+    @ObservationIgnored private var sampleEvents: [CalendarEvent] = []
+    @ObservationIgnored private var sampleCalendars: [CalendarInfo] = []
+
+    /// Fetches memoized per `revision`, since views ask for the same ranges on every redraw.
+    @ObservationIgnored private var cachedRevision = -1
+    @ObservationIgnored private var eventCache: [DateInterval: [CalendarEvent]] = [:]
+    @ObservationIgnored private var calendarCache: [CalendarInfo]?
 
     init() {
         isLive = true
@@ -35,10 +43,49 @@ final class CalendarStore {
         }
     }
 
-    init(eventsAccess: Access, remindersAccess: Access) {
+    init(eventsAccess: Access, remindersAccess: Access, events: [CalendarEvent] = [], calendars: [CalendarInfo] = []) {
         isLive = false
         self.eventsAccess = eventsAccess
         self.remindersAccess = remindersAccess
+        sampleEvents = events
+        sampleCalendars = calendars
+    }
+
+    // MARK: Reading
+
+    /// Every event occurrence overlapping `interval`, across all calendars.
+    func events(in interval: DateInterval) -> [CalendarEvent] {
+        invalidateIfStale()
+        guard eventsAccess == .granted else { return [] }
+        if let cached = eventCache[interval] { return cached }
+        let events: [CalendarEvent]
+        if isLive {
+            let predicate = eventStore.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
+            events = eventStore.events(matching: predicate).map(CalendarEvent.init)
+        } else {
+            events = sampleEvents.filter { $0.overlaps(interval) }
+        }
+        eventCache[interval] = events
+        return events
+    }
+
+    /// Every event calendar, sorted by account and then title.
+    var eventCalendars: [CalendarInfo] {
+        invalidateIfStale()
+        guard eventsAccess == .granted else { return [] }
+        if let calendarCache { return calendarCache }
+        let calendars = CalendarInfo.sortedForDisplay(isLive ? eventStore.calendars(for: .event).map(CalendarInfo.init) : sampleCalendars)
+        calendarCache = calendars
+        return calendars
+    }
+
+    /// Reading `revision` here also registers it with observation, so every view that
+    /// fetches through the store redraws when the database changes.
+    private func invalidateIfStale() {
+        guard cachedRevision != revision else { return }
+        cachedRevision = revision
+        eventCache = [:]
+        calendarCache = nil
     }
 
     /// The popover asks for access when events are readable but reminders were never asked

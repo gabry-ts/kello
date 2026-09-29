@@ -26,6 +26,7 @@ struct KelloApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let store = SettingsStore()
     let calendars = CalendarStore()
+    private let popoverState = PopoverState()
     private let navigation = Navigation()
     private var window: NSWindow?
     private var statusItem: StatusItemController?
@@ -33,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         store.saveNow()
 
-        statusItem = StatusItemController { [store, calendars] in
+        statusItem = StatusItemController(state: popoverState) { [store, calendars, popoverState] in
             AnyView(
                 MenuContent(openSettings: { [weak self] in
                     self?.statusItem?.closePopover()
@@ -41,6 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 })
                 .environment(store)
                 .environment(calendars)
+                .environment(popoverState)
             )
         } render: { [store] in
             MenuBarFormat.string(for: .now, settings: store.settings.menuBar)

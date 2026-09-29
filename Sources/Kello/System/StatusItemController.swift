@@ -2,6 +2,14 @@ import AppKit
 import Observation
 import SwiftUI
 
+/// State shared between the popover's content and its controller.
+@MainActor
+@Observable
+final class PopoverState {
+    /// A pinned popover stays open when clicking elsewhere, until closed from the menu bar.
+    var isPinned = false
+}
+
 /// The menu bar item and its popover. Managed directly instead of through MenuBarExtra,
 /// which does not reliably redraw its label, so the title updates on every change.
 @MainActor
@@ -10,21 +18,23 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
     private let popover = NSPopover()
     private let makeContent: () -> AnyView
     private let render: () -> String
+    private let state: PopoverState
     private var shown: String?
     private var minuteTimer: Timer?
 
     /// The popover's view is built on open and dropped on close, so nothing in it keeps
     /// running while it's hidden.
-    init(content: @escaping () -> AnyView, render: @escaping () -> String) {
+    init(state: PopoverState, content: @escaping () -> AnyView, render: @escaping () -> String) {
+        self.state = state
         self.makeContent = content
         self.render = render
         super.init()
         popover.delegate = self
-        popover.behavior = .transient
         popover.animates = true
         item.button?.target = self
         item.button?.action = #selector(toggle)
         refresh()
+        trackPin()
         scheduleMinuteTimer()
     }
 
@@ -46,6 +56,15 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         shown = title
         button.title = title
         button.setAccessibilityLabel("Kello")
+    }
+
+    private func trackPin() {
+        let pinned = withObservationTracking {
+            state.isPinned
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.trackPin() }
+        }
+        popover.behavior = pinned ? .applicationDefined : .transient
     }
 
     /// Realigns to the next minute boundary so the clock never drifts, then re-fires every
