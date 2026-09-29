@@ -61,7 +61,8 @@ final class AgendaTests: XCTestCase {
             reminder("Undated", due: nil),
         ]
         let sections = Agenda.sections(days: [now], events: events, reminders: reminders, now: now, calendar: calendar, locale: locale)
-        XCTAssertEqual(sections.map(\.title), ["Overdue", "Today"])
+        XCTAssertEqual(sections.map(\.isOverdue), [true, false])
+        XCTAssertEqual(sections[1].title, "Today")
         XCTAssertEqual(sections[0].entries.map(\.id), ["r|Older", "r|Old", "r|Yesterday", "r|Due today"])
         XCTAssertEqual(sections[1].entries.map(\.id), [
             "r|Later today", events[2].id.prefixed("e|"), events[0].id.prefixed("e|"), "now", events[1].id.prefixed("e|"),
@@ -106,24 +107,24 @@ final class AgendaTests: XCTestCase {
         XCTAssertNil(Agenda.nextUp(events: [events[5]], now: now, calendar: calendar))
     }
 
-    func testOverdueAge() {
-        XCTAssertEqual(AgendaFormat.overdueAge(since: now.addingTimeInterval(-(25 * 86400 + 23 * 3600 + 120)), now: now), "25d 23h ago")
-        XCTAssertEqual(AgendaFormat.overdueAge(since: now.addingTimeInterval(-(3 * 3600 + 12 * 60)), now: now), "3h 12m ago")
-        XCTAssertEqual(AgendaFormat.overdueAge(since: now.addingTimeInterval(-720), now: now), "12m ago")
-        XCTAssertEqual(AgendaFormat.overdueAge(since: now.addingTimeInterval(-20), now: now), "now")
-        XCTAssertEqual(AgendaFormat.compactDuration(2 * 86400), "2d")
-        XCTAssertEqual(AgendaFormat.compactDuration(3600), "1h")
+    func testCompactDuration() {
+        XCTAssertEqual(AgendaFormat.compactDuration(25 * 86400 + 23 * 3600 + 120, locale: locale), "25d 23h")
+        XCTAssertEqual(AgendaFormat.compactDuration(3 * 3600 + 12 * 60 + 59, locale: locale), "3h 12m")
+        XCTAssertEqual(AgendaFormat.compactDuration(720, locale: locale), "12m")
+        XCTAssertEqual(AgendaFormat.compactDuration(2 * 86400, locale: locale), "2d")
+        XCTAssertEqual(AgendaFormat.compactDuration(3600, locale: locale), "1h")
+        XCTAssertEqual(AgendaFormat.compactDuration(2 * 86400 + 3 * 3600, locale: Locale(identifier: "it_IT")), "2 g 3 h")
     }
 
     func testTimeRange() {
-        XCTAssertEqual(AgendaFormat.timeRange(start: date(29, 0), end: date(30, 0), isAllDay: true, calendar: calendar, locale: locale), "All day")
-        let timed = AgendaFormat.timeRange(start: date(29, 11), end: date(29, 11, 30), isAllDay: false, calendar: calendar, locale: locale)
+        XCTAssertNil(AgendaFormat.timeRange(start: date(29, 0), end: date(30, 0), isAllDay: true, calendar: calendar, locale: locale))
+        let timed = AgendaFormat.timeRange(start: date(29, 11), end: date(29, 11, 30), isAllDay: false, calendar: calendar, locale: locale) ?? ""
         XCTAssertTrue(timed.hasPrefix("11:00"), timed)
         XCTAssertTrue(timed.hasSuffix("11:30\u{202F}AM (GMT)"), timed)
         let compact = AgendaFormat.timeRange(start: date(29, 11), end: date(29, 11, 30), isAllDay: false, showsTimeZone: false,
-                                             calendar: calendar, locale: locale)
+                                             calendar: calendar, locale: locale) ?? ""
         XCTAssertTrue(compact.hasSuffix("11:30\u{202F}AM"), compact)
-        let span = AgendaFormat.timeRange(start: date(29, 0), end: date(2, 0, month: 10), isAllDay: true, calendar: calendar, locale: locale)
+        let span = AgendaFormat.timeRange(start: date(29, 0), end: date(2, 0, month: 10), isAllDay: true, calendar: calendar, locale: locale) ?? ""
         XCTAssertTrue(span.contains("Sep 29") && span.contains("Oct 1"), span)
     }
 

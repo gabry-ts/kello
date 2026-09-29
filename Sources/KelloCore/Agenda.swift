@@ -17,18 +17,22 @@ public enum AgendaEntry: Hashable, Sendable, Identifiable {
     }
 }
 
-/// A run of entries under one relative header ("Yesterday", "Today", "2 weeks ago").
+/// A run of entries under one relative header ("Yesterday", "Today", "2 weeks ago"), or
+/// the overdue reminders, whose header the app names.
 public struct AgendaSection: Hashable, Sendable, Identifiable {
-    public var id: String { title }
+    public var id: String { isOverdue ? "overdue" : title }
+    /// Empty for the overdue section.
     public let title: String
     public let entries: [AgendaEntry]
     /// The names of the day's holidays, shown under the header.
     public let holidays: [String]
+    public let isOverdue: Bool
 
-    public init(title: String, entries: [AgendaEntry], holidays: [String] = []) {
+    public init(title: String, entries: [AgendaEntry], holidays: [String] = [], isOverdue: Bool = false) {
         self.title = title
         self.entries = entries
         self.holidays = holidays
+        self.isOverdue = isOverdue
     }
 }
 
@@ -78,7 +82,7 @@ public enum Agenda {
             ? reminders.filter { $0.isOverdue(now: now, calendar: calendar) }.sorted { ($0.due ?? .distantPast) < ($1.due ?? .distantPast) }
             : []
         if !overdue.isEmpty {
-            sections.append(AgendaSection(title: overdueTitle, entries: overdue.map(AgendaEntry.reminder)))
+            sections.append(AgendaSection(title: "", entries: overdue.map(AgendaEntry.reminder), isOverdue: true))
         }
         let pending = reminders.filter { !$0.isOverdue(now: now, calendar: calendar) }
 
@@ -110,8 +114,6 @@ public enum Agenda {
         }
         return sections
     }
-
-    public static var overdueTitle: String { String(localized: "Overdue") }
 
     /// The next event today that hasn't started yet, for the "Next up" card. Declined and
     /// cancelled events are skipped, as are all-day ones.

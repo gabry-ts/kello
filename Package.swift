@@ -19,7 +19,8 @@ let package = Package(
                 "KelloCore",
                 .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
             ],
-            path: "Sources/Kello"
+            path: "Sources/Kello",
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "KelloCoreTests",

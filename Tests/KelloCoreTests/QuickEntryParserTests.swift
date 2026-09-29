@@ -41,6 +41,9 @@ final class QuickEntryParserTests: XCTestCase {
         assertEntry("Chiamare Marco venerdì 10:00-11:00", title: "Chiamare Marco", start: date(10, 2, 10), end: date(10, 2, 11), allDay: false)
         assertEntry("Ferie 12 ottobre", title: "Ferie", start: date(10, 12), end: date(10, 12), allDay: true)
         assertEntry("Cena sabato alle 20:30", title: "Cena", start: date(10, 3, 20, 30), end: date(10, 3, 21, 30), allDay: false)
+        // The examples the Italian quick entry suggests.
+        assertEntry("Pranzo con Sara venerdì alle 13", title: "Pranzo con Sara", start: date(10, 2, 13), end: date(10, 2, 14), allDay: false)
+        assertEntry("Chiamare Marco domani 10:00-11:00", title: "Chiamare Marco", start: date(9, 30, 10), end: date(9, 30, 11), allDay: false)
     }
 
     func testRangesOfDaysAndAllDay() {

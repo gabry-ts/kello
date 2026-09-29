@@ -1,30 +1,22 @@
 import Foundation
 
 public enum AgendaFormat {
-    /// How long ago a reminder was due, in its two largest units: "25d 23h ago",
-    /// "3h 12m ago", "12m ago", or "now" under a minute.
-    public static func overdueAge(since due: Date, now: Date) -> String {
-        let seconds = now.timeIntervalSince(due)
-        guard seconds >= 60 else { return String(localized: "now") }
-        return String(localized: "\(compactDuration(seconds)) ago")
-    }
-
-    /// A duration in its two largest units: "27m", "1h 5m", "2d 3h".
-    public static func compactDuration(_ seconds: TimeInterval) -> String {
+    /// A duration in its two largest units, in the locale's narrowest words: "27m",
+    /// "1h 5m", "2d 3h" in English, "2 g 3 h" in Italian. Whole minutes, rounded down.
+    public static func compactDuration(_ seconds: TimeInterval, locale: Locale = .current) -> String {
         let minutes = max(0, Int(seconds) / 60)
-        let days = minutes / 1440, hours = (minutes % 1440) / 60, mins = minutes % 60
-        if days > 0 { return hours > 0 ? "\(days)d \(hours)h" : "\(days)d" }
-        if hours > 0 { return mins > 0 ? "\(hours)h \(mins)m" : "\(hours)h" }
-        return "\(mins)m"
+        return Duration.seconds(minutes * 60)
+            .formatted(.units(allowed: [.days, .hours, .minutes], width: .narrow, maximumUnitCount: 2).locale(locale))
     }
 
-    /// "11:00 – 11:30 AM (GMT+2)", or "All day". Events spanning several days show their
-    /// dates as well. Compact rows leave the time zone out.
+    /// "11:00 – 11:30 AM (GMT+2)", or nil for an all-day event on a single day, which the
+    /// app calls "All day". Events spanning several days show their dates as well. Compact
+    /// rows leave the time zone out.
     public static func timeRange(start: Date, end: Date, isAllDay: Bool, showsTimeZone: Bool = true,
-                                 calendar: Calendar = .current, locale: Locale = .current) -> String {
+                                 calendar: Calendar = .current, locale: Locale = .current) -> String? {
         if isAllDay {
             let lastDay = calendar.date(byAdding: .day, value: -1, to: end) ?? end
-            guard end > start, !calendar.isDate(start, inSameDayAs: lastDay) else { return String(localized: "All day") }
+            guard end > start, !calendar.isDate(start, inSameDayAs: lastDay) else { return nil }
             let style = Date.IntervalFormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone).day().month(.abbreviated)
             return (start..<max(start, lastDay)).formatted(style)
         }

@@ -10,6 +10,11 @@
 	<string>Kello</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>it</string>
+	</array>
 	<key>CFBundleIdentifier</key>
 	<string>com.gabrielepartiti.kello</string>
 	<key>CFBundleInfoDictionaryVersion</key>

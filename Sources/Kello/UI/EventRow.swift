@@ -28,7 +28,7 @@ struct EventRow: View {
                     .strikethrough(isStruck)
                     .lineLimit(2)
                 Spacer(minLength: 6)
-                Text(AgendaFormat.timeRange(start: event.start, end: event.end, isAllDay: event.isAllDay, showsTimeZone: false))
+                Text(AgendaFormat.timeText(start: event.start, end: event.end, isAllDay: event.isAllDay, showsTimeZone: false))
                     .font(.system(size: 11.5, weight: .medium))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
@@ -195,7 +195,7 @@ struct NextUpCard: View {
                 .lineLimit(2)
                 .padding(.top, 8)
             HStack(spacing: 5) {
-                Text(AgendaFormat.timeRange(start: event.start, end: event.end, isAllDay: false))
+                Text(AgendaFormat.timeText(start: event.start, end: event.end, isAllDay: false))
                     .monospacedDigit()
                     .layoutPriority(1)
                 if let subtitle = event.displayedSubtitle {

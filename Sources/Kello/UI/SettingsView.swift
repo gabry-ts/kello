@@ -24,7 +24,7 @@ struct SettingsView: View {
         case timeZones
         case about
 
-        var title: String {
+        var title: LocalizedStringKey {
             switch self {
             case .general: "General"
             case .calendars: "Calendars"

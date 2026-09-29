@@ -55,7 +55,7 @@ struct QuickEntryView: View {
                     detail("calendar", Self.dayText(entry))
                     detail("clock", entry.isAllDay
                         ? String(localized: "All day")
-                        : AgendaFormat.timeRange(start: entry.start, end: entry.end, isAllDay: false, showsTimeZone: false))
+                        : AgendaFormat.timeText(start: entry.start, end: entry.end, isAllDay: false, showsTimeZone: false))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
@@ -94,7 +94,13 @@ struct QuickEntryView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Type what and when, for example:")
                 .foregroundStyle(.secondary)
-            ForEach(["Lunch with Sara friday 1pm", "Call Marco tomorrow 10:00-11:00", "Holiday 12 oct"], id: \.self) { example in
+            // Localized along with the parser's own words, so each language's examples parse.
+            let examples = [
+                String(localized: "Lunch with Sara friday 1pm"),
+                String(localized: "Call Marco tomorrow 10:00-11:00"),
+                String(localized: "Holiday 12 oct"),
+            ]
+            ForEach(examples, id: \.self) { example in
                 Button { text = example } label: {
                     Label(example, systemImage: "wand.and.stars")
                         .labelStyle(ExampleLabelStyle())
@@ -126,7 +132,7 @@ struct QuickEntryView: View {
         let calendar = Calendar.current
         if entry.isAllDay, !calendar.isDate(entry.start, inSameDayAs: entry.end),
            let end = calendar.date(byAdding: .day, value: 1, to: entry.end) {
-            return AgendaFormat.timeRange(start: entry.start, end: end, isAllDay: true)
+            return AgendaFormat.timeText(start: entry.start, end: end, isAllDay: true)
         }
         return entry.start.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
     }

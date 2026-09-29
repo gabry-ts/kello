@@ -30,9 +30,9 @@ struct AgendaView: View {
                     }
                     ForEach(Array(sections.enumerated()), id: \.element.id) { index, section in
                         SectionHeader(
-                            title: section.title,
+                            title: section.isOverdue ? String(localized: "Overdue") : section.title,
                             detail: Self.detail(section),
-                            badge: section.title == Agenda.overdueTitle ? section.entries.count : nil,
+                            badge: section.isOverdue ? section.entries.count : nil,
                             isFirst: index == 0 && nextUp == nil)
                         if !section.holidays.isEmpty {
                             HolidayLabels(names: section.holidays)
@@ -112,7 +112,7 @@ struct AgendaView: View {
 
     /// "4 events" or "2 reminders", on the right of a day's header.
     private static func detail(_ section: AgendaSection) -> String? {
-        guard section.title != Agenda.overdueTitle else { return nil }
+        guard !section.isOverdue else { return nil }
         var events = 0, reminders = 0
         for entry in section.entries {
             switch entry {
@@ -121,8 +121,8 @@ struct AgendaView: View {
             case .now: break
             }
         }
-        if events > 0 { return events == 1 ? String(localized: "1 event") : String(localized: "\(events) events") }
-        if reminders > 0 { return reminders == 1 ? String(localized: "1 reminder") : String(localized: "\(reminders) reminders") }
+        if events > 0 { return String(localized: "\(events) events") }
+        if reminders > 0 { return String(localized: "\(reminders) reminders") }
         return nil
     }
 }
