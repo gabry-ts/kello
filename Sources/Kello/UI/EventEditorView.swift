@@ -3,8 +3,8 @@ import KelloCore
 import SwiftUI
 
 /// Creates, edits or deletes one event, shown in place of the agenda inside the popover.
-/// Saving or deleting a recurring event asks, inline, whether to change this occurrence
-/// only or all future ones.
+/// New events start with a quick entry line that fills in the fields. Saving or deleting a
+/// recurring event asks, inline, whether to change this occurrence only or all future ones.
 struct EventEditorView: View {
     @Environment(CalendarStore.self) private var calendars
     @State var draft: EventDraft
@@ -23,6 +23,10 @@ struct EventEditorView: View {
                 showsSave: !draft.isReadOnly,
                 onBack: onClose,
                 onSave: requestSave)
+
+            if draft.isNew {
+                QuickEntryField(draft: $draft)
+            }
 
             EditorTitleField(placeholder: "Title", text: $draft.title, color: selectedColor)
                 .disabled(draft.isReadOnly)
@@ -50,7 +54,7 @@ struct EventEditorView: View {
     private var fields: some View {
         VStack(spacing: Theme.rowSpacing + 4) {
             FormCard {
-                FormRow("Calendar") { calendarPicker }
+                FormRow("Calendar") { CalendarPicker(calendarID: $draft.calendarID) }
                 Hairline(leading: 12)
                 FormRow("All-day") {
                     Toggle("", isOn: $draft.isAllDay)
@@ -108,26 +112,6 @@ struct EventEditorView: View {
                 draft.end = draft.end.addingTimeInterval(newStart.timeIntervalSince(draft.start))
                 draft.start = newStart
             })
-    }
-
-    private var calendarPicker: some View {
-        let writable = calendars.writableCalendars
-        // A read-only event's own calendar is listed too, so the picker has a selection.
-        let options = writable.contains { $0.id == draft.calendarID }
-            ? writable
-            : writable + calendars.eventCalendars.filter { $0.id == draft.calendarID }
-        return Picker("", selection: $draft.calendarID) {
-            ForEach(CalendarGroup.grouped(options)) { group in
-                Section(group.sourceTitle) {
-                    ForEach(group.calendars) { calendar in
-                        Label { Text(calendar.title) } icon: { Image(nsImage: .swatch(calendar.color)) }
-                            .tag(calendar.id)
-                    }
-                }
-            }
-        }
-        .labelsHidden()
-        .fixedSize()
     }
 
     @ViewBuilder

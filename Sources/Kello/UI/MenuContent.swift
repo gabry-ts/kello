@@ -5,6 +5,8 @@ import SwiftUI
 enum EditorRoute: Hashable {
     case event(EventDraft)
     case reminder(ReminderDraft)
+    /// A new event typed as one line, in this calendar.
+    case quickEntry(calendarID: String)
 }
 
 /// The menu bar popover: the month grid, the permission prompt while needed, the
@@ -74,6 +76,7 @@ struct MenuContent: View {
                 openSettings: openSettings,
                 search: canReadEvents ? { isSearching = true } : nil,
                 newEvent: canReadEvents ? { newEvent(on: viewModel.selectedDay, now: now) } : nil,
+                quickEvent: canReadEvents ? { route = .quickEntry(calendarID: defaultCalendarID) } : nil,
                 newReminder: canReadReminders ? { newReminder(on: viewModel.selectedDay) } : nil)
             if canReadEvents || canReadReminders {
                 StatusRow(status: AgendaStatus(events: todayEvents, reminders: reminders, now: now), showsOverdue: canReadReminders)
@@ -110,6 +113,8 @@ struct MenuContent: View {
             EventEditorView(draft: draft) { self.route = nil }
         case .reminder(let draft):
             ReminderEditorView(draft: draft) { self.route = nil }
+        case .quickEntry(let calendarID):
+            QuickEntryView(onClose: { self.route = nil }, onEditDetails: { self.route = .event($0) }, calendarID: calendarID)
         }
     }
 
@@ -136,8 +141,11 @@ struct MenuContent: View {
     }
 
     private func newEvent(on day: Date, now: Date) {
-        let calendarID = calendars.defaultCalendarID(hidden: store.settings.hiddenCalendarIDs)
-        route = .event(EventDraft.new(on: day, now: now, calendarID: calendarID))
+        route = .event(EventDraft.new(on: day, now: now, calendarID: defaultCalendarID))
+    }
+
+    private var defaultCalendarID: String {
+        calendars.defaultCalendarID(hidden: store.settings.hiddenCalendarIDs)
     }
 
     /// The events of visible calendars touching any of `days`, a contiguous run of dates.

@@ -12,6 +12,8 @@ struct PopoverToolbar: View {
     var search: (() -> Void)?
     /// Nil while calendars can't be read.
     var newEvent: (() -> Void)?
+    /// Nil while calendars can't be read.
+    var quickEvent: (() -> Void)?
     /// Nil while reminders can't be read.
     var newReminder: (() -> Void)?
 
@@ -36,6 +38,8 @@ struct PopoverToolbar: View {
                 Menu {
                     Button("New Event") { newEvent?() }
                         .disabled(newEvent == nil)
+                    Button("Quick Event…") { quickEvent?() }
+                        .disabled(quickEvent == nil)
                     Button("New Reminder") { newReminder?() }
                         .disabled(newReminder == nil)
                 } label: {

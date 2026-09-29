@@ -45,8 +45,12 @@ enum Snapshots {
         let sampleEvent = SampleData.events(now: SampleData.now)[0]
         snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).popoverFrame()
                         .environment(calendars), name: "editor-light", dark: false, dir: dir)
-        snapPopover(EventEditorView(draft: .new(on: .now, now: .now, calendarID: "work"), onClose: {}).popoverFrame()
-                        .environment(calendars), name: "editor-new-dark", dark: true, dir: dir)
+        for dark in [false, true] {
+            snapPopover(EventEditorView(draft: .new(on: .now, now: .now, calendarID: "work"), onClose: {}).popoverFrame()
+                            .environment(calendars), name: "editor-new-\(dark ? "dark" : "light")", dark: dark, dir: dir)
+        }
+        snapPopover(QuickEntryView(onClose: {}, onEditDetails: { _ in }, calendarID: "home").popoverFrame()
+                        .environment(calendars), name: "quick-entry-empty-light", dark: false, dir: dir)
         var remindersTab = Settings()
         remindersTab.listTab = .reminders
         snapPopover(popover(SettingsStore(settings: remindersTab), calendars), name: "popover-reminders-light", dark: false, dir: dir)
@@ -56,6 +60,9 @@ enum Snapshots {
         snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).popoverFrame()
                         .environment(calendars), name: "editor-dark", dark: true, dir: dir)
         for dark in [false, true] {
+            snapPopover(QuickEntryView(onClose: {}, onEditDetails: { _ in }, text: "Call Marco friday 10:00-11:00", calendarID: "work")
+                            .popoverFrame().environment(calendars),
+                        name: "quick-entry-\(dark ? "dark" : "light")", dark: dark, dir: dir)
             snapPopover(callRows, name: "event-rows-calls-\(dark ? "dark" : "light")", dark: dark, dir: dir)
             snapPopover(SearchView(now: SampleData.now, onClose: {}, onSelect: { _ in }, initialQuery: "stand")
                             .popoverFrame().environment(store).environment(calendars),
