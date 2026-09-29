@@ -34,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: StatusItemController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let isFirstLaunch = !SettingsStore.hasSavedSettings
         store.saveNow()
 
         statusItem = StatusItemController(state: popoverState) { [store, calendars, popoverState] in
@@ -52,6 +53,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         Hotkey.register { [weak self] in self?.statusItem?.togglePopover() }
         notifier.start { [weak self] day in self?.statusItem?.showPopover(on: day) }
+
+        // A menu bar calendar is only useful when it's always there, so it starts at login
+        // unless turned off in General.
+        if isFirstLaunch {
+            LoginItem.register()
+        }
 
         Task { await calendars.requestAccessIfNeeded() }
     }
