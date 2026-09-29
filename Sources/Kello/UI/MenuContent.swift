@@ -3,10 +3,11 @@ import SwiftUI
 /// The menu bar popover.
 struct MenuContent: View {
     let openSettings: () -> Void
+    @State private var viewModel = MonthGridViewModel()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MonthGridView()
+            MonthGridView(viewModel: viewModel)
             Divider()
             HStack(spacing: 14) {
                 Button(action: openSettings) {
@@ -26,6 +27,6 @@ struct MenuContent: View {
             .font(.callout)
         }
         .padding(12)
-        .frame(width: 300)
+        .frame(width: 308)
     }
 }

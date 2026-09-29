@@ -7,6 +7,9 @@ struct KelloApp: App {
 
     init() {
         let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--render-snapshots"), args.indices.contains(i + 1) {
+            exit(MainActor.assumeIsolated { Snapshots.render(to: URL(fileURLWithPath: args[i + 1])) })
+        }
         if let i = args.firstIndex(of: "--render-icon"), args.indices.contains(i + 1) {
             exit(MainActor.assumeIsolated { Snapshots.renderIconSet(to: URL(fileURLWithPath: args[i + 1])) })
         }
