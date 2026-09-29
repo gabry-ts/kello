@@ -61,7 +61,7 @@ struct CalendarVisibilityMenu: View {
                             get: { store.settings.isCalendarVisible(calendar.id) },
                             set: { store.settings.setCalendar(calendar.id, visible: $0) }
                         )) {
-                            Label { Text(calendar.title) } icon: { Image(nsImage: Self.swatch(calendar.color)) }
+                            Label { Text(calendar.title) } icon: { Image(nsImage: .swatch(calendar.color)) }
                         }
                     }
                 }
@@ -72,16 +72,5 @@ struct CalendarVisibilityMenu: View {
         .menuStyle(.button)
         .menuIndicator(.hidden)
         .help("Calendars")
-    }
-
-    /// Menus render SwiftUI shapes as template images, so the color dot is drawn in AppKit.
-    private static func swatch(_ color: ItemColor) -> NSImage {
-        let image = NSImage(size: NSSize(width: 10, height: 10), flipped: false) { rect in
-            NSColor(srgbRed: color.red, green: color.green, blue: color.blue, alpha: 1).setFill()
-            NSBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1)).fill()
-            return true
-        }
-        image.isTemplate = false
-        return image
     }
 }

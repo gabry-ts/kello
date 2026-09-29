@@ -79,6 +79,100 @@ final class CalendarStore {
         return calendars
     }
 
+    /// Calendars new events can go in.
+    var writableCalendars: [CalendarInfo] {
+        eventCalendars.filter(\.isWritable)
+    }
+
+    /// The system's default calendar for new events, unless it's hidden or read-only.
+    func defaultCalendarID(hidden: Set<String>) -> String {
+        let writable = writableCalendars
+        if isLive, let id = eventStore.defaultCalendarForNewEvents?.calendarIdentifier,
+           !hidden.contains(id), writable.contains(where: { $0.id == id }) {
+            return id
+        }
+        return (writable.first { !hidden.contains($0.id) } ?? writable.first)?.id ?? ""
+    }
+
+    // MARK: Writing
+
+    enum WriteError: LocalizedError {
+        case notFound
+        case noCalendar
+
+        var errorDescription: String? {
+            switch self {
+            case .notFound: String(localized: "The event no longer exists.")
+            case .noCalendar: String(localized: "Choose a calendar for the event.")
+            }
+        }
+    }
+
+    /// A draft of an existing occurrence, for the editor.
+    func draft(for event: CalendarEvent) -> EventDraft? {
+        guard isLive else { return EventDraft(sample: event) }
+        return findEvent(event.eventIdentifier, occurrenceStart: event.start).map(EventDraft.init)
+    }
+
+    /// Creates or updates the event. For recurring events `span` picks this occurrence
+    /// only or it and all future ones.
+    func save(_ draft: EventDraft, span: EKSpan) throws {
+        guard isLive else { return }
+        let event: EKEvent
+        if let identifier = draft.eventIdentifier {
+            guard let existing = findEvent(identifier, occurrenceStart: draft.occurrenceStart) else { throw WriteError.notFound }
+            event = existing
+        } else {
+            event = EKEvent(eventStore: eventStore)
+        }
+        guard let calendar = eventStore.calendar(withIdentifier: draft.calendarID) else { throw WriteError.noCalendar }
+
+        event.calendar = calendar
+        event.title = draft.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        event.isAllDay = draft.isAllDay
+        if draft.isAllDay {
+            // EventKit takes an all-day event's end as the last day it covers.
+            event.startDate = Calendar.current.startOfDay(for: draft.start)
+            event.endDate = Calendar.current.startOfDay(for: max(draft.start, draft.end))
+        } else {
+            event.startDate = draft.start
+            event.endDate = max(draft.start, draft.end)
+        }
+        event.location = draft.location.nilIfBlank
+        event.url = draft.parsedURL
+        event.notes = draft.notes.nilIfBlank
+        if draft.alert != .custom {
+            event.alarms = draft.alert.offset.map { [EKAlarm(relativeOffset: $0)] }
+        }
+        if draft.repeatRule != .custom {
+            event.recurrenceRules = draft.repeatRule.frequency.map { [EKRecurrenceRule(recurrenceWith: $0, interval: 1, end: nil)] }
+        }
+        try eventStore.save(event, span: span, commit: true)
+        revision += 1
+    }
+
+    func delete(_ draft: EventDraft, span: EKSpan) throws {
+        guard isLive, let identifier = draft.eventIdentifier else { return }
+        guard let event = findEvent(identifier, occurrenceStart: draft.occurrenceStart) else { throw WriteError.notFound }
+        try eventStore.remove(event, span: span, commit: true)
+        revision += 1
+    }
+
+    /// The occurrence of a (possibly recurring) event starting at `occurrenceStart`, found
+    /// by fetching that day, since `event(withIdentifier:)` returns the first occurrence.
+    private func findEvent(_ identifier: String, occurrenceStart: Date?) -> EKEvent? {
+        if let occurrenceStart {
+            let predicate = eventStore.predicateForEvents(withStart: occurrenceStart.addingTimeInterval(-1),
+                                                          end: occurrenceStart.addingTimeInterval(86400), calendars: nil)
+            if let match = eventStore.events(matching: predicate).first(where: {
+                $0.eventIdentifier == identifier && $0.startDate == occurrenceStart
+            }) {
+                return match
+            }
+        }
+        return eventStore.event(withIdentifier: identifier)
+    }
+
     /// Reading `revision` here also registers it with observation, so every view that
     /// fetches through the store redraws when the database changes.
     private func invalidateIfStale() {
@@ -144,5 +238,11 @@ final class CalendarStore {
         case .notDetermined: .notDetermined
         default: .denied
         }
+    }
+}
+
+private extension String {
+    var nilIfBlank: String? {
+        trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : self
     }
 }

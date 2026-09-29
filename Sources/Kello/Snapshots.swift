@@ -37,6 +37,11 @@ enum Snapshots {
         snapPopover(popover(SettingsStore(settings: hidden), calendars), name: "popover-hidden-work-light", dark: false, dir: dir)
         snapWindow(SettingsView(navigation: Navigation(pane: .calendars)).environment(SettingsStore(settings: hidden)).environment(calendars),
                    name: "settings-calendars-light", dark: false, dir: dir)
+        let sampleEvent = SampleData.events(now: .now)[0]
+        snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).padding(12).frame(width: 308)
+                        .environment(calendars), name: "editor-light", dark: false, dir: dir)
+        snapPopover(EventEditorView(draft: .new(on: .now, now: .now, calendarID: "work"), onClose: {}).padding(12).frame(width: 308)
+                        .environment(calendars), name: "editor-new-dark", dark: true, dir: dir)
         print("Snapshots written to \(dir.path)")
         return 0
     }

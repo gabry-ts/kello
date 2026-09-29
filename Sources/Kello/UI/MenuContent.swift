@@ -1,21 +1,36 @@
 import KelloCore
 import SwiftUI
 
+/// What the popover shows in place of the grid and agenda.
+enum EditorRoute: Hashable {
+    case event(EventDraft)
+}
+
 /// The menu bar popover: the month grid, then either the permission prompt or the
-/// toolbar, today's counts and the agenda.
+/// toolbar, today's counts and the agenda. Editors replace all of it while open.
 struct MenuContent: View {
     let openSettings: () -> Void
     @Environment(SettingsStore.self) private var store
     @Environment(CalendarStore.self) private var calendars
     @State private var viewModel = MonthGridViewModel()
+    @State private var route: EditorRoute?
 
     private var calendar: Calendar { .current }
 
     var body: some View {
-        // Redrawn every minute so the "now" marker, past events and counts stay current.
-        TimelineView(.everyMinute) { context in
-            content(now: context.date)
+        ZStack(alignment: .top) {
+            if let route {
+                editor(route)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            } else {
+                // Redrawn every minute so the "now" marker, past events and counts stay current.
+                TimelineView(.everyMinute) { context in
+                    content(now: context.date)
+                }
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            }
         }
+        .animation(.smooth(duration: 0.25), value: route)
         .padding(12)
         .frame(width: 308)
         .onAppear { calendars.refreshAccess() }
@@ -39,12 +54,27 @@ struct MenuContent: View {
                 Divider()
                 PermissionView()
             }
-            PopoverToolbar(openSettings: openSettings)
+            PopoverToolbar(openSettings: openSettings, newEvent: calendars.eventsAccess == .granted ? { newEvent(now: now) } : nil)
             if calendars.eventsAccess == .granted {
                 StatusRow(status: AgendaStatus(events: todayEvents, reminders: [], now: now), showsOverdue: false)
-                AgendaView(sections: sections, now: now)
+                AgendaView(sections: sections, now: now) { event in
+                    if let draft = calendars.draft(for: event) { route = .event(draft) }
+                }
             }
         }
+    }
+
+    @ViewBuilder
+    private func editor(_ route: EditorRoute) -> some View {
+        switch route {
+        case .event(let draft):
+            EventEditorView(draft: draft) { self.route = nil }
+        }
+    }
+
+    private func newEvent(now: Date) {
+        let calendarID = calendars.defaultCalendarID(hidden: store.settings.hiddenCalendarIDs)
+        route = .event(EventDraft.new(on: viewModel.selectedDay, now: now, calendarID: calendarID))
     }
 
     /// The events of visible calendars touching any of `days`, a contiguous run of dates.

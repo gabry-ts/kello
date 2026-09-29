@@ -6,6 +6,8 @@ struct PopoverToolbar: View {
     @Environment(SettingsStore.self) private var store
     @Environment(PopoverState.self) private var popover
     let openSettings: () -> Void
+    /// Nil while calendars can't be written to.
+    var newEvent: (() -> Void)?
 
     var body: some View {
         @Bindable var store = store
@@ -15,6 +17,11 @@ struct PopoverToolbar: View {
                 Image(systemName: popover.isPinned ? "pin.fill" : "pin")
             }
             .help(popover.isPinned ? "Unpin" : "Keep Open")
+            Button { newEvent?() } label: {
+                Image(systemName: "plus")
+            }
+            .disabled(newEvent == nil)
+            .help("New Event")
             Spacer()
             Button {
                 store.settings.agendaMode = store.settings.agendaMode == .day ? .upcoming : .day
