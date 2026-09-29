@@ -19,6 +19,10 @@ struct Settings: Codable, Hashable {
     /// Whose events mark days as holidays in the grid, shown by name above that day's
     /// agenda instead of as events.
     var holidayCalendar = HolidayCalendarChoice.automatic
+    /// Extra clocks shown in the popover, in order.
+    var timeZones: [WorldClockZone] = []
+    /// One of `timeZones` whose time follows the date in the menu bar.
+    var menuBarTimeZone: String?
 
     init() {}
 
@@ -33,6 +37,8 @@ struct Settings: Codable, Hashable {
         listTab = try c.decodeIfPresent(ListTab.self, forKey: .listTab) ?? d.listTab
         hiddenCalendarIDs = try c.decodeIfPresent(Set<String>.self, forKey: .hiddenCalendarIDs) ?? d.hiddenCalendarIDs
         holidayCalendar = try c.decodeIfPresent(HolidayCalendarChoice.self, forKey: .holidayCalendar) ?? d.holidayCalendar
+        timeZones = try c.decodeIfPresent([WorldClockZone].self, forKey: .timeZones) ?? d.timeZones
+        menuBarTimeZone = try c.decodeIfPresent(String.self, forKey: .menuBarTimeZone) ?? d.menuBarTimeZone
     }
 
     func isCalendarVisible(_ id: String) -> Bool {
@@ -41,5 +47,17 @@ struct Settings: Codable, Hashable {
 
     mutating func setCalendar(_ id: String, visible: Bool) {
         if visible { hiddenCalendarIDs.remove(id) } else { hiddenCalendarIDs.insert(id) }
+    }
+
+    /// The menu bar title: the date and time, then the chosen extra zone's time, if any.
+    func menuBarTitle(now: Date) -> String {
+        let title = MenuBarFormat.string(for: now, settings: menuBar)
+        guard let id = menuBarTimeZone, let zone = timeZones.first(where: { $0.identifier == id }) else { return title }
+        return "\(title) · \(WorldClock.menuBarText(for: zone, now: now, is24Hour: menuBar.is24Hour))"
+    }
+
+    mutating func removeTimeZone(_ identifier: String) {
+        timeZones.removeAll { $0.identifier == identifier }
+        if menuBarTimeZone == identifier { menuBarTimeZone = nil }
     }
 }

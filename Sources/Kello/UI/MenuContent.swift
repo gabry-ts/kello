@@ -81,6 +81,9 @@ struct MenuContent: View {
             if canReadEvents || canReadReminders {
                 StatusRow(status: AgendaStatus(events: todayEvents, reminders: reminders, now: now), showsOverdue: canReadReminders)
             }
+            if !settings.timeZones.isEmpty {
+                WorldClocksRow(zones: settings.timeZones, now: now)
+            }
             if canReadReminders && (settings.listTab == .reminders || !canReadEvents) {
                 // Overdue and today's reminders, plus the selected day's.
                 let days = Array(Set([calendar.startOfDay(for: now), viewModel.selectedDay])).sorted()

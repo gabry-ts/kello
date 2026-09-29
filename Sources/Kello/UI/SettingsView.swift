@@ -20,12 +20,14 @@ struct SettingsView: View {
         case general
         case calendars
         case menuBar
+        case timeZones
 
         var title: String {
             switch self {
             case .general: "General"
             case .calendars: "Calendars"
             case .menuBar: "Menu Bar"
+            case .timeZones: "Time Zones"
             }
         }
 
@@ -34,6 +36,7 @@ struct SettingsView: View {
             case .general: "gearshape.fill"
             case .calendars: "calendar"
             case .menuBar: "menubar.rectangle"
+            case .timeZones: "globe"
             }
         }
 
@@ -43,6 +46,7 @@ struct SettingsView: View {
             case .general: .gray
             case .calendars: .red
             case .menuBar: .blue
+            case .timeZones: .indigo
             }
         }
     }
@@ -84,6 +88,7 @@ struct SettingsView: View {
         case .general: GeneralView()
         case .calendars: CalendarsSettingsView()
         case .menuBar: MenuBarSettingsView()
+        case .timeZones: TimeZonesSettingsView()
         }
     }
 }

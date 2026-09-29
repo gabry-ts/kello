@@ -35,6 +35,8 @@ enum Snapshots {
         snapPopover(popover(weekNumbersStore, denied), name: "popover-weeknumbers-light", dark: false, dir: dir)
         var hidden = Settings()
         hidden.hiddenCalendarIDs = ["work"]
+        hidden.timeZones = SampleData.timeZones
+        hidden.menuBarTimeZone = SampleData.timeZones[0].identifier
         snapPopover(popover(SettingsStore(settings: hidden), calendars), name: "popover-hidden-work-light", dark: false, dir: dir)
         for dark in [false, true] {
             for pane in SettingsView.Pane.allCases {
@@ -59,6 +61,13 @@ enum Snapshots {
         snapPopover(popover(SettingsStore(settings: remindersTab), calendars), name: "popover-reminders-dark", dark: true, dir: dir)
         snapPopover(EventEditorView(draft: EventDraft(sample: sampleEvent), onClose: {}).popoverFrame()
                         .environment(calendars), name: "editor-dark", dark: true, dir: dir)
+        var clocks = Settings()
+        clocks.timeZones = SampleData.timeZones
+        for dark in [false, true] {
+            snapPopover(popover(SettingsStore(settings: clocks), calendars), name: "popover-clocks-\(dark ? "dark" : "light")", dark: dark, dir: dir)
+        }
+        snapWindow(TimeZonePicker(excluded: [], onPick: { _ in }), name: "time-zone-picker-light", dark: false, dir: dir,
+                   size: NSSize(width: 420, height: 440))
         for dark in [false, true] {
             snapPopover(QuickEntryView(onClose: {}, onEditDetails: { _ in }, text: "Call Marco friday 10:00-11:00", calendarID: "work")
                             .popoverFrame().environment(calendars),
@@ -153,7 +162,7 @@ enum Snapshots {
         window.close()
     }
 
-    private static func snapWindow(_ view: some View, name: String, dark: Bool, dir: URL) {
+    private static func snapWindow(_ view: some View, name: String, dark: Bool, dir: URL, size: NSSize = NSSize(width: 640, height: 460)) {
         let controller = NSHostingController(rootView: view)
         controller.sceneBridgingOptions = [.toolbars]
         let window = NSWindow(contentViewController: controller)
@@ -161,7 +170,7 @@ enum Snapshots {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
-        window.setContentSize(NSSize(width: 640, height: 460))
+        window.setContentSize(size)
         window.setFrameOrigin(NSPoint(x: -6000, y: -6000))
         window.orderFrontRegardless()
         RunLoop.main.run(until: Date().addingTimeInterval(0.8))
@@ -224,6 +233,13 @@ private enum SampleData {
         CalendarInfo(id: "gym", title: "Training", sourceTitle: "Google", color: ItemColor(red: 0.2, green: 0.75, blue: 0.4), isWritable: true),
         CalendarInfo(id: "holidays", title: "Holidays", sourceTitle: "Other", color: ItemColor(red: 0.6, green: 0.4, blue: 0.9), isWritable: false,
                      isSubscribed: true),
+    ]
+
+    /// New York is behind and asleep at the sample time, Tokyo ahead, Honolulu a day behind.
+    static let timeZones = [
+        WorldClockZone(identifier: "America/New_York", label: "NYC"),
+        WorldClockZone(identifier: "Asia/Tokyo"),
+        WorldClockZone(identifier: "Pacific/Honolulu"),
     ]
 
     static let lists = [

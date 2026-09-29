@@ -45,7 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 .environment(popoverState)
             )
         } render: { [store] in
-            MenuBarFormat.string(for: .now, settings: store.settings.menuBar)
+            store.settings.menuBarTitle(now: .now)
         }
 
         Task { await calendars.requestAccessIfNeeded() }

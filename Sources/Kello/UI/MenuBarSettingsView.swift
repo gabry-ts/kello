@@ -44,7 +44,7 @@ struct MenuBarSettingsView: View {
         HStack {
             Text("Preview")
             Spacer()
-            Text(MenuBarFormat.string(for: .now, settings: store.settings.menuBar))
+            Text(store.settings.menuBarTitle(now: .now))
                 .font(.system(size: 13, weight: .medium))
                 .monospacedDigit()
                 .padding(.horizontal, 10)

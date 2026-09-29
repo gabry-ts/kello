@@ -41,6 +41,9 @@ enum Theme {
     static let destructive = Color.red
     /// Holiday day numbers in the grid and the holiday label above a day's agenda.
     static let holiday = Color.red
+    /// The sun and moon on the extra clocks.
+    static let daytime = Color.orange
+    static let nighttime = Color.indigo
 
     /// A color made a touch deeper in light mode, so pale calendar colors still read as text.
     static func legible(_ color: Color, _ scheme: ColorScheme) -> Color {
