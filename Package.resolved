@@ -1,5 +1,5 @@
 {
-  "originHash" : "f698785ba5034efc564ea8cfac556a6c23141b068feb0107ef8705732b0ac7db",
+  "originHash" : "a2ce015058f85478e6a3e9798d0cc361ae230ac966b7cdf9fed4f6f9d368345b",
   "pins" : [
     {
       "identity" : "keyboardshortcuts",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/gabry-ts/partiti-ui",
       "state" : {
-        "revision" : "795bbdfef557725cfcd853752e8c1e39907d0232",
-        "version" : "0.1.0"
+        "revision" : "942866162c606c2ddb8a51f88d57755d2de368ff",
+        "version" : "0.2.0"
       }
     },
     {

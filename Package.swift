@@ -8,7 +8,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "2.4.0"),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.0"),
-        .package(url: "https://github.com/gabry-ts/partiti-ui", from: "0.1.0"),
+        .package(url: "https://github.com/gabry-ts/partiti-ui", from: "0.2.0"),
     ],
     targets: [
         .target(
