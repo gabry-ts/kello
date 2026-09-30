@@ -1,5 +1,6 @@
 import EventKit
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// Creates, edits or deletes one event, shown in place of the agenda inside the popover.
@@ -14,9 +15,10 @@ struct EventEditorView: View {
     @State private var pending: Pending?
     @State private var errorMessage: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.puiAccent) private var accent
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacing) {
+        VStack(alignment: .leading, spacing: PUI.Popover.cardGap) {
             EditorHeader(
                 title: draft.isNew ? "New Event" : (draft.isReadOnly ? "Event" : "Edit Event"),
                 canSave: draft.canSave && pending == nil,
@@ -39,8 +41,8 @@ struct EventEditorView: View {
             }
             footer
         }
-        .animation(Theme.spring(reduceMotion), value: pending)
-        .animation(Theme.spring(reduceMotion), value: draft.isAllDay)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: pending)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: draft.isAllDay)
         .onAppear {
             // Text fields only take typing while the app is active.
             NSApp.activate()
@@ -48,27 +50,26 @@ struct EventEditorView: View {
     }
 
     private var selectedColor: Color {
-        calendars.eventCalendars.first { $0.id == draft.calendarID }.map { Color($0.color) } ?? .accentColor
+        calendars.eventCalendars.first { $0.id == draft.calendarID }.map { Color($0.color) } ?? accent.color
     }
 
     private var fields: some View {
-        VStack(spacing: Theme.rowSpacing + 4) {
+        VStack(spacing: PUI.Space.m) {
             FormCard {
                 FormRow("Calendar") { CalendarPicker(calendarID: $draft.calendarID) }
-                Hairline(leading: 10)
+                Hairline(leading: PUI.Space.l)
                 FormRow("All-day") {
-                    Toggle("", isOn: $draft.isAllDay)
+                    Toggle("All-day", isOn: $draft.isAllDay)
                         .labelsHidden()
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
+                        .toggleStyle(PUISwitchStyle(mini: true))
                 }
-                Hairline(leading: 10)
+                Hairline(leading: PUI.Space.l)
                 FormRow("Starts") {
                     DatePicker("", selection: startBinding, displayedComponents: draft.isAllDay ? [.date] : [.date, .hourAndMinute])
                         .labelsHidden()
                         .datePickerStyle(.field)
                 }
-                Hairline(leading: 10)
+                Hairline(leading: PUI.Space.l)
                 FormRow("Ends") {
                     DatePicker("", selection: $draft.end, in: draft.start..., displayedComponents: draft.isAllDay ? [.date] : [.date, .hourAndMinute])
                         .labelsHidden()
@@ -84,7 +85,7 @@ struct EventEditorView: View {
                     .labelsHidden()
                     .fixedSize()
                 }
-                Hairline(leading: 10)
+                Hairline(leading: PUI.Space.l)
                 FormRow("Repeat") {
                     Picker("", selection: $draft.repeatRule) {
                         ForEach(RepeatOption.allCases, id: \.self) { Text($0.title).tag($0) }
@@ -96,9 +97,9 @@ struct EventEditorView: View {
             }
             FormCard {
                 FormField(systemImage: "mappin.and.ellipse", placeholder: "Location", text: $draft.location)
-                Hairline(leading: 30)
+                Hairline(leading: FormField.textLeading)
                 FormField(systemImage: "link", placeholder: "URL", text: $draft.url)
-                Hairline(leading: 30)
+                Hairline(leading: FormField.textLeading)
                 FormField(systemImage: "text.alignleft", placeholder: "Notes", text: $draft.notes, isMultiline: true)
             }
         }
@@ -166,33 +167,25 @@ struct EditorHeader: View {
     let onBack: () -> Void
     let onSave: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 8) {
-                Button(action: onBack) {
-                    GlassCircle(systemImage: "chevron.left")
-                }
-                .buttonStyle(.plain)
+        HStack(spacing: PUI.Space.m) {
+            GlassCircleButton("chevron.left", action: onBack)
                 .keyboardShortcut(.cancelAction)
                 .help("Back")
-                Text(title)
-                    .font(.system(size: 13, weight: .semibold))
-                Spacer()
-                if showsSave {
-                    Button(action: onSave) {
-                        Text("Save")
-                            .font(.system(size: 11, weight: .semibold))
-                            .padding(.horizontal, 3)
-                    }
-                    .buttonStyle(.glassProminent)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.small)
+            Text(title)
+                .font(PUI.Font.headline)
+                .foregroundStyle(Ink(colorScheme).primary)
+            Spacer()
+            if showsSave {
+                Button("Save", action: onSave)
+                    .buttonStyle(PrimaryButtonStyle(height: PUI.Control.small, fullWidth: false))
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!canSave)
-                }
+                    .enabledLook(canSave)
             }
         }
-        .frame(height: Theme.controlSize)
+        .frame(height: PUI.Control.small)
     }
 }
 
@@ -204,47 +197,49 @@ struct SpanConfirmation: View {
     let asksForSpan: Bool
     let onConfirm: (EKSpan) -> Void
     let onCancel: () -> Void
+    @Environment(\.puiAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var color: Color { isDestructive ? Ink(colorScheme).red : accent.color }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: PUI.Space.m) {
+            HStack(spacing: PUI.Space.s) {
                 Image(systemName: isDestructive ? "trash" : "repeat")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(isDestructive ? Theme.destructive : Color.accentColor)
+                    .foregroundStyle(PUI.legible(color, colorScheme))
                 Text(message)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(PUI.Font.callout.weight(.semibold))
+                    .foregroundStyle(Ink(colorScheme).primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             // The two span buttons and Cancel don't fit on one line in the popover.
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: PUI.Space.s) {
                 if asksForSpan {
-                    HStack(spacing: 6) {
+                    HStack(spacing: PUI.Space.s) {
                         confirm("This Event Only", span: .thisEvent)
                         confirm("All Future Events", span: .futureEvents)
                     }
                 }
-                HStack(spacing: 6) {
+                HStack(spacing: PUI.Space.s) {
                     if !asksForSpan {
                         confirm(isDestructive ? "Delete" : "Save", span: .thisEvent)
                     }
                     Spacer(minLength: 0)
                     Button("Cancel", action: onCancel)
-                        .buttonStyle(.glass)
+                        .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
                 }
             }
-            .buttonBorderShape(.capsule)
-            .controlSize(.small)
         }
-        .padding(10)
+        .padding(PUI.Space.m + 2)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .surface(radius: Theme.groupRadius, tint: isDestructive ? Theme.destructive : .accentColor, tintAmount: 0.7)
+        .puiSurface(radius: PUI.Radius.group, tint: color, tintAmount: 0.7)
         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .bottom)))
     }
 
     private func confirm(_ title: LocalizedStringKey, span: EKSpan) -> some View {
-        Button(role: isDestructive ? .destructive : nil) { onConfirm(span) } label: { Text(title).fontWeight(.semibold) }
-            .buttonStyle(.glassProminent)
-            .tint(isDestructive ? Theme.destructive : .accentColor)
+        Button(role: isDestructive ? .destructive : nil) { onConfirm(span) } label: { Text(title) }
+            .buttonStyle(PrimaryButtonStyle(height: PUI.Control.small, fullWidth: false, color: isDestructive ? color : nil))
     }
 }
 
@@ -257,17 +252,17 @@ struct EditorTitleField: View {
     let color: Color
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: PUI.Space.m) {
             Capsule()
                 .fill(color)
                 .frame(width: 3, height: 16)
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
-                .font(.system(size: 13.5, weight: .semibold))
+                .font(PUI.Font.headline)
         }
-        .padding(.horizontal, 10)
-        .frame(height: 34)
-        .surface(radius: Theme.groupRadius)
+        .padding(.horizontal, PUI.Space.l)
+        .frame(height: PUI.Control.large)
+        .puiSurface(radius: PUI.Radius.group)
     }
 }
 
@@ -279,9 +274,9 @@ struct FormCard<Content: View>: View {
         VStack(spacing: 0) {
             content
         }
-        .font(.system(size: 12))
+        .font(PUI.Font.callout)
         .controlSize(.small)
-        .surface(radius: Theme.groupRadius)
+        .puiSurface(radius: PUI.Radius.group)
     }
 }
 
@@ -295,15 +290,17 @@ struct FormRow<Control: View>: View {
         self.control = control()
     }
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: PUI.Space.m) {
             Text(label)
-                .foregroundStyle(.primary)
-            Spacer(minLength: 6)
+                .foregroundStyle(Ink(colorScheme).primary)
+            Spacer(minLength: PUI.Space.s)
             control
         }
-        .padding(.horizontal, 10)
-        .frame(minHeight: 30)
+        .padding(.horizontal, PUI.Space.l)
+        .frame(minHeight: PUI.Control.regular + 2)
     }
 }
 
@@ -313,12 +310,16 @@ struct FormField: View {
     let placeholder: LocalizedStringKey
     @Binding var text: String
     var isMultiline = false
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// Where the text starts, for the hairlines between fields.
+    static let textLeading = PUI.Space.l + 12 + PUI.Space.m
 
     var body: some View {
-        HStack(alignment: isMultiline ? .firstTextBaseline : .center, spacing: 8) {
+        HStack(alignment: isMultiline ? .firstTextBaseline : .center, spacing: PUI.Space.m) {
             Image(systemName: systemImage)
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Ink(colorScheme).secondary)
                 .frame(width: 12)
             Group {
                 if isMultiline {
@@ -330,9 +331,9 @@ struct FormField: View {
             }
             .textFieldStyle(.plain)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .frame(minHeight: 30)
+        .padding(.horizontal, PUI.Space.l)
+        .padding(.vertical, PUI.Space.s + 1)
+        .frame(minHeight: PUI.Control.regular + 2)
     }
 }
 
@@ -340,31 +341,36 @@ struct FormField: View {
 struct DeleteButton: View {
     let title: LocalizedStringKey
     let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var isHovered = false
 
     var body: some View {
         Button(role: .destructive, action: action) {
             Label(title, systemImage: "trash")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Theme.destructive)
+                .font(PUI.Font.callout.weight(.medium))
+                .foregroundStyle(Ink(colorScheme).red)
                 .frame(maxWidth: .infinity)
-                .frame(height: 30)
+                .frame(height: PUI.Control.regular + 2)
+                .puiHoverHighlight(isHovered, radius: PUI.Radius.group)
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .surface(radius: Theme.groupRadius, elevated: false)
-        .hoverHighlight(cornerRadius: Theme.groupRadius, opacity: 0.04)
+        .puiSurface(radius: PUI.Radius.group, elevated: false)
+        .onHover { isHovered = $0 }
+        .animation(PUI.Motion.hover, value: isHovered)
     }
 }
 
 /// A save or delete failure, in red under the fields.
 struct EditorError: View {
     let message: String
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Label(message, systemImage: "exclamationmark.triangle.fill")
-            .font(.system(size: 11))
-            .foregroundStyle(Theme.destructive)
-            .padding(.horizontal, 3)
+            .font(PUI.Font.caption)
+            .foregroundStyle(Ink(colorScheme).red)
+            .padding(.horizontal, PUI.Space.xs)
     }
 }
 

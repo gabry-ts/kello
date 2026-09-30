@@ -1214,6 +1214,28 @@
         }
       }
     },
+    "Off" : {
+      "comment" : "Accessibility value of a switch",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattivo"
+          }
+        }
+      }
+    },
+    "On" : {
+      "comment" : "Accessibility value of a switch",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivo"
+          }
+        }
+      }
+    },
     "Only events with a call link" : {
       "localizations" : {
         "it" : {

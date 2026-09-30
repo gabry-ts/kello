@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// Creates, edits or deletes one reminder, shown in place of the agenda inside the popover.
@@ -10,9 +11,10 @@ struct ReminderEditorView: View {
     @State private var confirmsDelete = false
     @State private var errorMessage: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.puiAccent) private var accent
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacing) {
+        VStack(alignment: .leading, spacing: PUI.Popover.cardGap) {
             EditorHeader(
                 title: draft.isNew ? "New Reminder" : "Edit Reminder",
                 canSave: draft.canSave && !confirmsDelete,
@@ -21,33 +23,31 @@ struct ReminderEditorView: View {
 
             EditorTitleField(placeholder: "Title", text: $draft.title, color: selectedColor)
 
-            VStack(spacing: Theme.rowSpacing + 4) {
+            VStack(spacing: PUI.Space.m) {
                 FormCard {
                     FormRow("List") { listPicker }
-                    Hairline(leading: 10)
+                    Hairline(leading: PUI.Space.l)
                     FormRow("Date") {
                         if draft.hasDueDate {
                             DatePicker("", selection: $draft.due, displayedComponents: [.date])
                                 .labelsHidden()
                                 .datePickerStyle(.field)
                         }
-                        Toggle("", isOn: $draft.hasDueDate)
+                        Toggle("Date", isOn: $draft.hasDueDate)
                             .labelsHidden()
-                            .toggleStyle(.switch)
-                            .controlSize(.mini)
+                            .toggleStyle(PUISwitchStyle(mini: true))
                     }
                     if draft.hasDueDate {
-                        Hairline(leading: 10)
+                        Hairline(leading: PUI.Space.l)
                         FormRow("Time") {
                             if draft.hasDueTime {
                                 DatePicker("", selection: $draft.due, displayedComponents: [.hourAndMinute])
                                     .labelsHidden()
                                     .datePickerStyle(.field)
                             }
-                            Toggle("", isOn: $draft.hasDueTime)
+                            Toggle("Time", isOn: $draft.hasDueTime)
                                 .labelsHidden()
-                                .toggleStyle(.switch)
-                                .controlSize(.mini)
+                                .toggleStyle(PUISwitchStyle(mini: true))
                         }
                     }
                 }
@@ -75,9 +75,9 @@ struct ReminderEditorView: View {
                 DeleteButton(title: "Delete Reminder") { confirmsDelete = true }
             }
         }
-        .animation(Theme.spring(reduceMotion), value: confirmsDelete)
-        .animation(Theme.spring(reduceMotion), value: draft.hasDueDate)
-        .animation(Theme.spring(reduceMotion), value: draft.hasDueTime)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: confirmsDelete)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: draft.hasDueDate)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: draft.hasDueTime)
         .onAppear {
             // Text fields only take typing while the app is active.
             NSApp.activate()
@@ -85,7 +85,7 @@ struct ReminderEditorView: View {
     }
 
     private var selectedColor: Color {
-        calendars.reminderLists.first { $0.id == draft.listID }.map { Color($0.color) } ?? .accentColor
+        calendars.reminderLists.first { $0.id == draft.listID }.map { Color($0.color) } ?? accent.color
     }
 
     private var listPicker: some View {

@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// Adds an event from one typed line, shown in place of the agenda: the line in a large
@@ -14,9 +15,11 @@ struct QuickEntryView: View {
     @State private var errorMessage: String?
     @State private var isSaved = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.puiAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacing) {
+        VStack(alignment: .leading, spacing: PUI.Popover.cardGap) {
             EditorHeader(title: "Quick Event", canSave: entry != nil && !calendarID.isEmpty, onBack: onClose, onSave: save)
             EditorTitleField(placeholder: "Dentist tomorrow at 3pm", text: $text, color: calendarColor)
                 .onSubmit(save)
@@ -31,7 +34,7 @@ struct QuickEntryView: View {
                 EditorError(message: errorMessage)
             }
         }
-        .animation(Theme.spring(reduceMotion), value: entry == nil)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: entry == nil)
         .onAppear {
             // Text fields only take typing while the app is active.
             NSApp.activate()
@@ -41,16 +44,17 @@ struct QuickEntryView: View {
     }
 
     private var calendarColor: Color {
-        calendars.eventCalendars.first { $0.id == calendarID }.map { Color($0.color) } ?? .accentColor
+        calendars.eventCalendars.first { $0.id == calendarID }.map { Color($0.color) } ?? accent.color
     }
 
     private func preview(_ entry: QuickEntry) -> some View {
-        VStack(spacing: Theme.rowSpacing + 4) {
+        let ink = Ink(colorScheme)
+        return VStack(spacing: PUI.Space.m) {
             FormCard {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: PUI.Space.xs) {
                     Text(entry.title.isEmpty ? String(localized: "New Event") : entry.title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(entry.title.isEmpty ? .secondary : .primary)
+                        .font(PUI.Font.headline)
+                        .foregroundStyle(entry.title.isEmpty ? ink.secondary : ink.primary)
                         .lineLimit(2)
                     detail("calendar", Self.dayText(entry))
                     detail("clock", entry.isAllDay
@@ -58,42 +62,40 @@ struct QuickEntryView: View {
                         : AgendaFormat.timeText(start: entry.start, end: entry.end, isAllDay: false, showsTimeZone: false))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(10)
-                Hairline(leading: 10)
+                .padding(PUI.Space.l)
+                Hairline(leading: PUI.Space.l)
                 FormRow("Calendar") { CalendarPicker(calendarID: $calendarID) }
             }
-            HStack(spacing: 6) {
+            HStack(spacing: PUI.Space.s) {
                 Text("Press Return to add")
-                    .foregroundStyle(.secondary)
+                    .font(PUI.Font.caption)
+                    .foregroundStyle(ink.secondary)
                 Spacer(minLength: 0)
                 Button("Edit Details…") { onEditDetails(entry.draft(calendarID: calendarID)) }
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.small)
+                    .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
             }
-            .font(.system(size: 11))
-            .padding(.horizontal, 3)
+            .padding(.horizontal, PUI.Space.xs)
         }
     }
 
     private func detail(_ systemImage: String, _ text: String) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: PUI.Space.s) {
             Image(systemName: systemImage)
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(calendarColor)
                 .frame(width: 12)
             Text(text)
-                .font(.system(size: 11.5))
+                .font(PUI.Font.callout)
                 .monospacedDigit()
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Ink(colorScheme).secondary)
         }
     }
 
     /// A few lines to type, while the field is empty.
     private var examples: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: PUI.Space.s) {
             Text("Type what and when, for example:")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Ink(colorScheme).secondary)
             // Localized along with the parser's own words, so each language's examples parse.
             let examples = [
                 String(localized: "Lunch with Sara friday 1pm"),
@@ -108,22 +110,24 @@ struct QuickEntryView: View {
                 .buttonStyle(.plain)
             }
         }
-        .font(.system(size: 11.5))
+        .font(PUI.Font.callout)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .surface(radius: Theme.groupRadius, elevated: false)
+        .padding(PUI.Space.l)
+        .puiSurface(radius: PUI.Radius.group, elevated: false)
     }
 
     private struct ExampleLabelStyle: LabelStyle {
         func makeBody(configuration: Configuration) -> some View {
-            HStack(spacing: 6) {
-                configuration.icon
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(.tertiary)
-                configuration.title
-                    .foregroundStyle(.primary)
+            Inked { ink in
+                HStack(spacing: PUI.Space.s) {
+                    configuration.icon
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(ink.tertiary)
+                    configuration.title
+                        .foregroundStyle(ink.primary)
+                }
+                .contentShape(.rect)
             }
-            .contentShape(.rect)
         }
     }
 
@@ -185,20 +189,22 @@ struct CalendarPicker: View {
 struct QuickEntryField: View {
     @Binding var draft: EventDraft
     @State private var text = ""
+    @Environment(\.puiAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: PUI.Space.s + 1) {
             Image(systemName: "wand.and.stars")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.tint)
+                .foregroundStyle(accent.legible(colorScheme))
                 .frame(width: 14)
             TextField("Quick entry, like “Lunch friday 1pm”", text: $text)
                 .textFieldStyle(.plain)
-                .font(.system(size: 11.5))
+                .font(PUI.Font.callout)
         }
-        .padding(.horizontal, 10)
-        .frame(height: 30)
-        .surface(radius: Theme.groupRadius, tint: .accentColor, tintAmount: 0.5, elevated: false)
+        .padding(.horizontal, PUI.Space.l)
+        .frame(height: PUI.Control.regular + 2)
+        .puiSurface(radius: PUI.Radius.group, tint: accent.color, tintAmount: 0.5, elevated: false)
         .onChange(of: text) {
             guard let entry = QuickEntryParser.parse(text, now: .now) else { return }
             draft.title = entry.title
