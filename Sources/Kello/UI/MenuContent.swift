@@ -121,7 +121,21 @@ struct MenuContent: View {
                     })
             }
         } footer: {
-            KelloFooter(openSettings: openSettings)
+            // `menuItems` is passed by label, not as a trailing closure: both `PopoverFooter`
+            // overloads accept one trailing closure (the other is `onQuit`), and a trailing
+            // closure here would silently bind to that instead.
+            PopoverFooter(
+                onSettings: openSettings,
+                onCheckForUpdates: { Updater.checkForUpdates() },
+                onBuyMeACoffee: { ExternalLinks.openBuyMeACoffee() },
+                menuItems: {
+                    Toggle("Show Upcoming Days", isOn: Binding(
+                        get: { store.settings.agendaMode == .upcoming },
+                        set: { store.settings.agendaMode = $0 ? .upcoming : .day }))
+                    if calendars.eventsAccess == .granted {
+                        CalendarVisibilityMenu()
+                    }
+                })
         }
     }
 

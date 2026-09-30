@@ -76,3 +76,14 @@ struct AppIconView: View {
         .aspectRatio(1, contentMode: .fit)
     }
 }
+
+extension AppIconView {
+    /// The icon rendered once into a `SwiftUI.Image`, for contexts that need an image
+    /// rather than a view, such as Partiti UI's `AboutPane`.
+    @MainActor static let image: Image = {
+        let renderer = ImageRenderer(content: AppIconView().frame(width: 256, height: 256))
+        renderer.scale = 2
+        guard let cgImage = renderer.cgImage else { return Image(systemName: "clock") }
+        return Image(decorative: cgImage, scale: 2)
+    }()
+}
