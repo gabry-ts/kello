@@ -23,7 +23,8 @@ struct TimeZonesSettingsView: View {
                         .padding(.horizontal, PUI.Space.l)
                 }
                 ForEach($store.settings.timeZones) { $zone in
-                    TimeZoneRow(zone: $zone, index: index(of: zone), count: store.settings.timeZones.count, move: move, remove: remove)
+                    TimeZoneRow(zone: $zone, isFirst: zone == store.settings.timeZones.first, isLast: zone == store.settings.timeZones.last,
+                                move: move, remove: remove)
                         .background {
                             // The row the dragged clock will take the place of.
                             RoundedRectangle(cornerRadius: PUI.Radius.row, style: .continuous)
@@ -70,25 +71,14 @@ struct TimeZonesSettingsView: View {
         }
     }
 
-    private func index(of zone: WorldClockZone) -> Int {
-        store.settings.timeZones.firstIndex(of: zone) ?? 0
+    /// Moves a clock one place up or down, from its menu.
+    private func move(_ identifier: String, by offset: Int) {
+        store.settings.timeZones = Reorder.moving(store.settings.timeZones, id: identifier, by: offset)
     }
 
-    private func move(_ index: Int, by offset: Int) {
-        let target = index + offset
-        guard store.settings.timeZones.indices.contains(index), store.settings.timeZones.indices.contains(target) else { return }
-        store.settings.timeZones.swapAt(index, target)
-    }
-
-    /// Moves the dragged clock into `target`'s slot: dragged up it lands before the
-    /// target, dragged down after it, so the first and last slots are both reachable.
+    /// Moves the dragged clock into `target`'s slot.
     private func drop(_ identifier: String, onto target: String) {
-        var zones = store.settings.timeZones
-        guard identifier != target,
-              let from = zones.firstIndex(where: { $0.identifier == identifier }),
-              let to = zones.firstIndex(where: { $0.identifier == target }) else { return }
-        zones.move(fromOffsets: IndexSet(integer: from), toOffset: from < to ? to + 1 : to)
-        store.settings.timeZones = zones
+        store.settings.timeZones = Reorder.moving(store.settings.timeZones, id: identifier, onto: target)
     }
 
     private func remove(_ identifier: String) {
@@ -100,9 +90,9 @@ struct TimeZonesSettingsView: View {
 /// a menu to move or remove it.
 private struct TimeZoneRow: View {
     @Binding var zone: WorldClockZone
-    let index: Int
-    let count: Int
-    let move: (Int, Int) -> Void
+    let isFirst: Bool
+    let isLast: Bool
+    let move: (String, Int) -> Void
     let remove: (String) -> Void
     @Environment(\.colorScheme) private var colorScheme
 
@@ -145,10 +135,10 @@ private struct TimeZoneRow: View {
                 }
                 .frame(minWidth: 70, alignment: .trailing)
                 Menu {
-                    Button("Move Up") { move(index, -1) }
-                        .disabled(index == 0)
-                    Button("Move Down") { move(index, 1) }
-                        .disabled(index == count - 1)
+                    Button("Move Up") { move(zone.identifier, -1) }
+                        .disabled(isFirst)
+                    Button("Move Down") { move(zone.identifier, 1) }
+                        .disabled(isLast)
                     Divider()
                     Button("Remove", role: .destructive) { remove(zone.identifier) }
                 } label: {
