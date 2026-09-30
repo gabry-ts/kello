@@ -93,8 +93,9 @@ final class CalendarStore {
         let events: [CalendarEvent]
         if isLive {
             // EventKit's store is safe to read from any thread; the fetch returns plain values.
-            nonisolated(unsafe) let store = eventStore
+            let box = UncheckedStore(store: eventStore)
             events = await Task.detached(priority: .userInitiated) {
+                let store = box.store
                 let predicate = store.predicateForEvents(withStart: interval.start, end: interval.end, calendars: nil)
                 return store.events(matching: predicate).map(CalendarEvent.init)
             }.value
@@ -364,4 +365,10 @@ private extension String {
     var nilIfBlank: String? {
         trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : self
     }
+}
+
+/// Carries the event store into a background fetch. EventKit's store can be read from any
+/// thread, which the compiler can't know.
+private struct UncheckedStore: @unchecked Sendable {
+    let store: EKEventStore
 }
