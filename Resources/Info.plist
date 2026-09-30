@@ -10,35 +10,35 @@
 	<string>Kello</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.gabrielepartiti.kello</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>
 		<string>it</string>
 	</array>
-	<key>CFBundleIdentifier</key>
-	<string>com.gabrielepartiti.kello</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>Kello</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>1.1.0</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>3</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>26.0</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Kello shows your calendar events in the menu bar.</string>
-	<key>NSRemindersFullAccessUsageDescription</key>
-	<string>Kello shows your reminders in the menu bar.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Gabriele Partiti</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Kello shows your reminders in the menu bar.</string>
 	<key>SUFeedURL</key>
 	<string>https://github.com/gabry-ts/kello/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
