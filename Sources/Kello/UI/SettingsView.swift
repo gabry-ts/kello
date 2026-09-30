@@ -61,20 +61,22 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        SettingsWindow(sections: [SidebarSection(nil, Pane.allCases.map { SidebarItem($0.title, symbol: $0.icon, style: .tile($0.tint)) })],
-                       selection: selection) {
+        SettingsWindow(sections: [SidebarSection(nil, Pane.allCases.map {
+            SidebarItem(Text(verbatim: $0.title), id: $0.rawValue, symbol: $0.icon, style: .tile($0.tint))
+        })], selection: selection) {
             paneView(navigation.pane)
         }
         .frame(minWidth: PUI.Window.settingsMin.width, minHeight: PUI.Window.settingsMin.height)
         .puiAccent(.kello)
     }
 
-    /// The sidebar selects by title, which Partiti UI uses as the item's id.
+    /// The sidebar selects by the pane's stable raw value, so it doesn't change with the
+    /// language, as its localized title would.
     private var selection: Binding<String> {
         Binding(
-            get: { navigation.pane.title },
-            set: { title in
-                if let pane = Pane.allCases.first(where: { $0.title == title }) { navigation.pane = pane }
+            get: { navigation.pane.rawValue },
+            set: { id in
+                if let pane = Pane.allCases.first(where: { $0.rawValue == id }) { navigation.pane = pane }
             })
     }
 
