@@ -1,46 +1,68 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// Time Zones settings: the extra clocks, each with an optional label, reordered by
 /// dragging or from its menu, and which one's time also shows in the menu bar.
 struct TimeZonesSettingsView: View {
     @Environment(SettingsStore.self) private var store
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.puiAccent) private var accent
     @State private var isPicking = false
+    @State private var dropTarget: String?
 
     var body: some View {
         @Bindable var store = store
-        Form {
-            PaneHeader(pane: .timeZones, subtitle: "Clocks for other places, shown above the agenda in the popover.")
-            Section {
+        KelloPane(pane: .timeZones, subtitle: String(localized: "Clocks for other places, shown above the agenda in the popover.")) {
+            SettingsGroup(String(localized: "Clocks"), footer: String(localized: "Drag to reorder. Leave a label empty to show the city.")) {
                 if store.settings.timeZones.isEmpty {
                     Text("No time zones yet.")
-                        .foregroundStyle(.secondary)
+                        .font(PUI.Font.body)
+                        .foregroundStyle(Ink(colorScheme).secondary)
+                        .frame(maxWidth: .infinity, minHeight: 38, alignment: .leading)
+                        .padding(.horizontal, PUI.Space.l)
                 }
                 ForEach($store.settings.timeZones) { $zone in
                     TimeZoneRow(zone: $zone, index: index(of: zone), count: store.settings.timeZones.count, move: move, remove: remove)
+                        .background {
+                            // The row the dragged clock will take the place of.
+                            RoundedRectangle(cornerRadius: PUI.Radius.row, style: .continuous)
+                                .fill(accent.color.opacity(dropTarget == zone.identifier ? 0.15 : 0))
+                                .padding(PUI.Space.xxs)
+                        }
+                        .draggable(zone.identifier) {
+                            Text(WorldClock.cityName(for: zone.identifier)).padding(PUI.Space.s)
+                        }
+                        .dropDestination(for: String.self) { values, _ in
+                            guard let moved = values.first else { return false }
+                            drop(moved, onto: zone.identifier)
+                            return true
+                        } isTargeted: { targeted in
+                            if targeted { dropTarget = zone.identifier } else if dropTarget == zone.identifier { dropTarget = nil }
+                        }
                 }
-                .onMove { store.settings.timeZones.move(fromOffsets: $0, toOffset: $1) }
-                Button("Add Time Zone…") { isPicking = true }
-                    .buttonStyle(.glass)
-            } header: {
-                Text("Clocks")
-            } footer: {
-                Text("Drag to reorder. Leave a label empty to show the city.")
-                    .foregroundStyle(.secondary)
+                HStack {
+                    Spacer()
+                    Button("Add Time Zone…") { isPicking = true }
+                        .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
+                }
+                .padding(.horizontal, PUI.Space.l)
+                .padding(.vertical, PUI.Space.m)
             }
-            Section {
-                Picker("Also show in the menu bar", selection: $store.settings.menuBarTimeZone) {
-                    Text("None").tag(String?.none)
-                    ForEach(store.settings.timeZones) { zone in
-                        Text(zone.displayName).tag(Optional(zone.identifier))
+            SettingsGroup(String(localized: "Menu Bar")) {
+                SettingsRow(String(localized: "Also show in the menu bar")) {
+                    Picker("Also show in the menu bar", selection: $store.settings.menuBarTimeZone) {
+                        Text("None").tag(String?.none)
+                        ForEach(store.settings.timeZones) { zone in
+                            Text(zone.displayName).tag(Optional(zone.identifier))
+                        }
                     }
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                .disabled(store.settings.timeZones.isEmpty)
-            } header: {
-                Text("Menu Bar")
+                .enabledLook(!store.settings.timeZones.isEmpty)
             }
         }
-        .formStyle(.grouped)
         .sheet(isPresented: $isPicking) {
             TimeZonePicker(excluded: Set(store.settings.timeZones.map(\.identifier))) { identifier in
                 store.settings.timeZones.append(WorldClockZone(identifier: identifier))
@@ -56,6 +78,17 @@ struct TimeZonesSettingsView: View {
         let target = index + offset
         guard store.settings.timeZones.indices.contains(index), store.settings.timeZones.indices.contains(target) else { return }
         store.settings.timeZones.swapAt(index, target)
+    }
+
+    /// Moves the dragged clock into `target`'s slot: dragged up it lands before the
+    /// target, dragged down after it, so the first and last slots are both reachable.
+    private func drop(_ identifier: String, onto target: String) {
+        var zones = store.settings.timeZones
+        guard identifier != target,
+              let from = zones.firstIndex(where: { $0.identifier == identifier }),
+              let to = zones.firstIndex(where: { $0.identifier == target }) else { return }
+        zones.move(fromOffsets: IndexSet(integer: from), toOffset: from < to ? to + 1 : to)
+        store.settings.timeZones = zones
     }
 
     private func remove(_ identifier: String) {
@@ -76,33 +109,38 @@ private struct TimeZoneRow: View {
     var body: some View {
         // Redrawn every minute, so the time stays current while the window is open.
         TimelineView(.everyMinute) { context in
+            let ink = Ink(colorScheme)
             let reading = WorldClock.reading(for: zone, now: context.date)
-            HStack(spacing: 10) {
+            HStack(spacing: PUI.Space.m + 2) {
                 Image(systemName: reading.isDaytime ? "sun.max.fill" : "moon.fill")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Theme.legible(reading.isDaytime ? Theme.daytime : Theme.nighttime, colorScheme))
+                    .foregroundStyle(reading.isDaytime ? KelloStyle.daytime(colorScheme) : KelloStyle.nighttime(colorScheme))
                     .frame(width: 18)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(WorldClock.cityName(for: zone.identifier))
+                        .font(PUI.Font.body)
+                        .foregroundStyle(ink.primary)
                     Text(TimeZonePicker.offset(zone.identifier, now: context.date))
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                        .font(PUI.Font.caption)
+                        .foregroundStyle(ink.secondary)
                         .lineLimit(1)
                 }
                 .layoutPriority(1)
-                Spacer(minLength: 8)
+                Spacer(minLength: PUI.Space.m)
                 TextField("Label", text: $zone.label, prompt: Text("Label"))
                     .labelsHidden()
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 96)
-                HStack(spacing: 4) {
+                HStack(spacing: PUI.Space.xs) {
                     Text(reading.time)
+                        .font(PUI.Font.body)
                         .monospacedDigit()
+                        .foregroundStyle(ink.primary)
                     if let offset = reading.dayOffsetText {
                         Text(offset)
-                            .font(.system(size: 10, weight: .bold))
+                            .font(PUI.Font.badge)
                             .monospacedDigit()
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(ink.secondary)
                     }
                 }
                 .frame(minWidth: 70, alignment: .trailing)
@@ -122,6 +160,9 @@ private struct TimeZoneRow: View {
                 .fixedSize()
                 .help("More")
             }
+            .padding(.horizontal, PUI.Space.l)
+            .padding(.vertical, PUI.Space.m)
+            .frame(minHeight: 38)
         }
     }
 }
@@ -143,10 +184,10 @@ struct TimeZonePicker: View {
                 TextField("Search cities or time zones", text: $query)
                     .textFieldStyle(.plain)
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, PUI.Space.l)
             .frame(height: 32)
-            .glassEffect(.regular, in: .capsule)
-            .padding(12)
+            .puiGlass(Capsule())
+            .padding(PUI.Space.l)
             List(results, id: \.self, selection: $selection) { identifier in
                 HStack {
                     VStack(alignment: .leading, spacing: 1) {
@@ -174,13 +215,13 @@ struct TimeZonePicker: View {
                 Spacer()
                 Button("Cancel", role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
+                    .buttonStyle(SecondaryButtonStyle())
                 Button("Add") { selection.map(pick) }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.glassProminent)
-                    .disabled(selection == nil)
+                    .buttonStyle(PrimaryButtonStyle(height: PUI.Control.regular, fullWidth: false))
+                    .enabledLook(selection != nil)
             }
-            .buttonBorderShape(.capsule)
-            .padding(12)
+            .padding(PUI.Space.l)
         }
         .frame(width: 420, height: 440)
     }

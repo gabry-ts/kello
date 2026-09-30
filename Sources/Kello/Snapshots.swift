@@ -169,7 +169,6 @@ enum Snapshots {
 
     private static func snapWindow(_ view: some View, name: String, dark: Bool, dir: URL, size: NSSize = PUI.Window.settings) {
         let controller = NSHostingController(rootView: view.puiAccent(.kello).puiGlassRendering(.painted))
-        controller.sceneBridgingOptions = [.toolbars]
         let window = NSWindow(contentViewController: controller)
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true

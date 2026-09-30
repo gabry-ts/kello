@@ -6,14 +6,14 @@ import SwiftUI
 @MainActor
 @Observable
 final class Navigation {
-    var pane: SettingsView.Pane?
+    var pane: SettingsView.Pane
 
     init(pane: SettingsView.Pane = .general) {
         self.pane = pane
     }
 }
 
-/// The settings window: one sidebar, one pane per section.
+/// The settings window: Partiti UI's floating sidebar, one pane per section.
 struct SettingsView: View {
     @Bindable var navigation: Navigation
 
@@ -25,14 +25,14 @@ struct SettingsView: View {
         case timeZones
         case about
 
-        var title: LocalizedStringKey {
+        var title: String {
             switch self {
-            case .general: "General"
-            case .calendars: "Calendars"
-            case .notifications: "Notifications"
-            case .menuBar: "Menu Bar"
-            case .timeZones: "Time Zones"
-            case .about: "About"
+            case .general: String(localized: "General")
+            case .calendars: String(localized: "Calendars")
+            case .notifications: String(localized: "Notifications")
+            case .menuBar: String(localized: "Menu Bar")
+            case .timeZones: String(localized: "Time Zones")
+            case .about: String(localized: "About")
             }
         }
 
@@ -61,34 +61,21 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationSplitView {
-            List(selection: $navigation.pane) {
-                ForEach(Pane.allCases, id: \.self, content: paneRow)
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-        } detail: {
-            detail
+        SettingsWindow(sections: [SidebarSection(nil, Pane.allCases.map { SidebarItem($0.title, symbol: $0.icon, style: .tile($0.tint)) })],
+                       selection: selection) {
+            paneView(navigation.pane)
         }
-        .frame(minWidth: 640, minHeight: 420)
+        .frame(minWidth: PUI.Window.settingsMin.width, minHeight: PUI.Window.settingsMin.height)
+        .puiAccent(.kello)
     }
 
-    private func paneRow(_ pane: Pane) -> some View {
-        Label {
-            Text(pane.title)
-        } icon: {
-            IconTile(pane.icon, color: pane.tint)
-        }
-        .tag(pane)
-    }
-
-    @ViewBuilder
-    private var detail: some View {
-        if let pane = navigation.pane {
-            paneView(pane)
-                .navigationTitle(pane.title)
-        } else {
-            ContentUnavailableView("Select a Section", systemImage: "sidebar.left")
-        }
+    /// The sidebar selects by title, which Partiti UI uses as the item's id.
+    private var selection: Binding<String> {
+        Binding(
+            get: { navigation.pane.title },
+            set: { title in
+                if let pane = Pane.allCases.first(where: { $0.title == title }) { navigation.pane = pane }
+            })
     }
 
     @ViewBuilder
@@ -104,25 +91,37 @@ struct SettingsView: View {
     }
 }
 
-/// The top of each settings pane: its icon tile, title and a line about it.
-struct PaneHeader: View {
+/// A scrolling settings pane opening with Partiti UI's header for `pane`.
+struct KelloPane<Content: View>: View {
     let pane: SettingsView.Pane
-    let subtitle: LocalizedStringKey
+    let subtitle: String
+    @ViewBuilder let content: Content
 
     var body: some View {
-        Section {
-            HStack(spacing: 12) {
-                IconTile(pane.icon, color: pane.tint, size: PUI.Window.paneTile)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(pane.title)
-                        .font(.system(size: 15, weight: .semibold))
-                    Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+        ScrollView {
+            SettingsPane {
+                PaneHeader(pane.title, subtitle: subtitle, symbol: pane.icon, color: pane.tint)
+            } content: {
+                content
             }
-            .padding(.vertical, 4)
         }
+        .scrollBounceBehavior(.basedOnSize)
+    }
+}
+
+/// A switch for a settings row, labeled for accessibility with the row's title.
+struct RowSwitch: View {
+    let title: String
+    @Binding var isOn: Bool
+
+    init(_ title: String, isOn: Binding<Bool>) {
+        self.title = title
+        self._isOn = isOn
+    }
+
+    var body: some View {
+        Toggle(title, isOn: $isOn)
+            .toggleStyle(PUISwitchStyle())
+            .labelsHidden()
     }
 }

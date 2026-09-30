@@ -1,43 +1,38 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// Calendars settings: the holidays calendar, then every calendar and reminder list,
-/// grouped by account, with a toggle to show or hide it in the popover.
+/// grouped by account, with a switch to show or hide it in the popover.
 struct CalendarsSettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(CalendarStore.self) private var calendars
 
     var body: some View {
-        Form {
-            PaneHeader(pane: .calendars, subtitle: "Choose which calendars and reminder lists appear in the menu bar.")
+        KelloPane(pane: .calendars, subtitle: String(localized: "Choose which calendars and reminder lists appear in the menu bar.")) {
             if calendars.eventsAccess != .granted {
-                Section {
-                    Text("Allow Kello to access your calendars to choose which ones to show.")
-                        .foregroundStyle(.secondary)
-                    Button("Open Privacy Settings…") { calendars.openPrivacySettings(for: .event) }
-                        .buttonStyle(.glass)
+                SettingsGroup {
+                    SettingsRow(String(localized: "Allow Kello to access your calendars to choose which ones to show.")) {
+                        Button("Open Privacy Settings…") { calendars.openPrivacySettings(for: .event) }
+                            .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
+                    }
                 }
             } else {
-                Section {
-                    holidayPicker
-                } header: {
-                    Text("Holidays")
-                } footer: {
-                    Text("Days with an event in this calendar get a red number in the grid, and the holiday's name shows above that day's agenda.")
-                        .foregroundStyle(.secondary)
+                SettingsGroup(String(localized: "Holidays"),
+                              footer: String(localized: "Days with an event in this calendar get a red number in the grid, and the holiday's name shows above that day's agenda.")) {
+                    SettingsRow(String(localized: "Holidays calendar")) { holidayPicker }
                 }
             }
             // Calendars and reminder lists can share an account name, so each section is
             // keyed by kind as well.
             ForEach(sections, id: \.id) { section in
-                Section(section.title) {
+                SettingsGroup(section.title) {
                     ForEach(section.calendars) { calendar in
                         CalendarToggle(calendar: calendar)
                     }
                 }
             }
         }
-        .formStyle(.grouped)
     }
 
     /// Shows the automatic pick until one is chosen; choosing "None" turns holidays off.
@@ -57,6 +52,8 @@ struct CalendarsSettingsView: View {
                 }
             }
         }
+        .labelsHidden()
+        .fixedSize()
     }
 
     private var sections: [(id: String, title: String, calendars: [CalendarInfo])] {
@@ -67,24 +64,29 @@ struct CalendarsSettingsView: View {
     }
 }
 
-/// A calendar's color swatch, title and visibility toggle.
+/// A calendar's color swatch, title and visibility switch, as one row of a group.
 struct CalendarToggle: View {
     @Environment(SettingsStore.self) private var store
+    @Environment(\.colorScheme) private var colorScheme
     let calendar: CalendarInfo
 
     var body: some View {
-        Toggle(isOn: Binding(
-            get: { store.settings.isCalendarVisible(calendar.id) },
-            set: { store.settings.setCalendar(calendar.id, visible: $0) }
-        )) {
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(Color(calendar.color).gradient)
-                    .frame(width: 12, height: 12)
-                    .overlay(Circle().strokeBorder(.black.opacity(0.08), lineWidth: 0.5))
-                Text(calendar.title)
-            }
+        let color = Color(calendar.color)
+        HStack(spacing: PUI.Space.m + 2) {
+            Circle()
+                .fill(LinearGradient(colors: [PUI.mix(color, with: .white, by: 0.15), color], startPoint: .top, endPoint: .bottom))
+                .overlay(Circle().strokeBorder(Color.black.opacity(0.12), lineWidth: 0.5))
+                .frame(width: 12, height: 12)
+            Text(calendar.title)
+                .font(PUI.Font.body)
+                .foregroundStyle(Ink(colorScheme).primary)
+            Spacer(minLength: PUI.Space.l)
+            RowSwitch(calendar.title, isOn: Binding(
+                get: { store.settings.isCalendarVisible(calendar.id) },
+                set: { store.settings.setCalendar(calendar.id, visible: $0) }))
         }
+        .padding(.horizontal, PUI.Space.l)
+        .frame(minHeight: 38)
     }
 }
 

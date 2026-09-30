@@ -1,5 +1,6 @@
 import KelloCore
 import KeyboardShortcuts
+import PartitiUI
 import SwiftUI
 
 struct GeneralView: View {
@@ -10,48 +11,43 @@ struct GeneralView: View {
 
     var body: some View {
         @Bindable var store = store
-        Form {
-            PaneHeader(pane: .general, subtitle: "How the calendar in the menu bar popover is laid out.")
-            Section {
-                Toggle("Launch at login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { _, enabled in
-                        enabled ? LoginItem.register() : LoginItem.unregister()
-                        loginItemStatus = LoginItem.status
-                    }
+        KelloPane(pane: .general, subtitle: String(localized: "How the calendar in the menu bar popover is laid out.")) {
+            SettingsGroup(String(localized: "Startup")) {
+                SettingsRow(String(localized: "Launch at login")) {
+                    RowSwitch(String(localized: "Launch at login"), isOn: $launchAtLogin)
+                }
                 if loginItemStatus == .requiresApproval {
-                    LabeledContent {
+                    SettingsRow(String(localized: "Waiting for your approval in System Settings")) {
                         Button("Open Login Items…") { LoginItem.openSystemSettings() }
-                    } label: {
-                        Text("Waiting for your approval in System Settings")
-                            .foregroundStyle(.secondary)
+                            .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
                     }
                 }
-            } header: {
-                Text("Startup")
+            }
+            .onChange(of: launchAtLogin) { _, enabled in
+                enabled ? LoginItem.register() : LoginItem.unregister()
+                loginItemStatus = LoginItem.status
             }
             .onAppear { loginItemStatus = LoginItem.status }
-            Section {
-                Picker("First day of the week", selection: $store.settings.firstWeekday) {
-                    Text("System Default").tag(FirstWeekday.system)
-                    Text("Monday").tag(FirstWeekday.monday)
-                    Text("Sunday").tag(FirstWeekday.sunday)
+            SettingsGroup(String(localized: "Calendar")) {
+                SettingsRow(String(localized: "First day of the week")) {
+                    Picker("First day of the week", selection: $store.settings.firstWeekday) {
+                        Text("System Default").tag(FirstWeekday.system)
+                        Text("Monday").tag(FirstWeekday.monday)
+                        Text("Sunday").tag(FirstWeekday.sunday)
+                    }
+                    .labelsHidden()
+                    .fixedSize()
                 }
-                Toggle("Show week numbers", isOn: $store.settings.showWeekNumbers)
-            } header: {
-                Text("Calendar")
+                SettingsRow(String(localized: "Show week numbers")) {
+                    RowSwitch(String(localized: "Show week numbers"), isOn: $store.settings.showWeekNumbers)
+                }
             }
-            Section {
-                KeyboardShortcuts.Recorder(for: .togglePopover) {
-                    Text("Show or hide Kello")
+            SettingsGroup(String(localized: "Keyboard Shortcut"), footer: String(localized: "Opens the calendar from any app.")) {
+                SettingsRow(String(localized: "Show or hide Kello")) {
+                    KeyboardShortcuts.Recorder(for: .togglePopover)
                 }
-            } header: {
-                Text("Keyboard Shortcut")
-            } footer: {
-                Text("Opens the calendar from any app.")
-                    .foregroundStyle(.secondary)
             }
         }
-        .formStyle(.grouped)
     }
 }
 

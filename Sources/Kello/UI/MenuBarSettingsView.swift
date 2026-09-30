@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// Menu bar settings: the title's components in a list the user can drag to reorder and
@@ -6,71 +7,80 @@ import SwiftUI
 /// a live preview.
 struct MenuBarSettingsView: View {
     @Environment(SettingsStore.self) private var store
+    @Environment(\.puiAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
     @State private var dropTarget: MenuBarComponent?
 
     var body: some View {
         @Bindable var store = store
-        Form {
-            PaneHeader(pane: .menuBar, subtitle: "What the date and time in the menu bar show.")
-            Section {
-                preview
-                LabeledContent("Text Size") {
+        KelloPane(pane: .menuBar, subtitle: String(localized: "What the date and time in the menu bar show.")) {
+            SettingsGroup {
+                SettingsRow(String(localized: "Preview")) { preview }
+                SettingsRow(String(localized: "Text Size")) {
                     Slider(value: $store.settings.menuBar.textSize, in: MenuBarSettings.textSizeRange, step: 0.5)
                         .frame(width: 160)
                 }
             }
-            Section {
+            SettingsGroup(String(localized: "Shown in the Menu Bar"),
+                          footer: String(localized: "Drag to change the order. Ignored while a custom pattern is set below.")) {
                 ForEach(store.settings.menuBar.items) { item in
-                    row(item)
+                    row(item.component)
                 }
-                Toggle("Month name (instead of number)", isOn: $store.settings.menuBar.showMonthName)
-                    .disabled(!store.settings.menuBar.isOn(.date))
-                Toggle("24-hour clock", isOn: $store.settings.menuBar.is24Hour)
-                    .disabled(!store.settings.menuBar.isOn(.time))
-            } header: {
-                Text("Shown in the Menu Bar")
-            } footer: {
-                Text("Drag to change the order. Ignored while a custom pattern is set below.")
-                    .foregroundStyle(.secondary)
+                SettingsRow(String(localized: "Month name (instead of number)")) {
+                    RowSwitch(String(localized: "Month name (instead of number)"), isOn: $store.settings.menuBar.showMonthName)
+                }
+                .enabledLook(store.settings.menuBar.isOn(.date))
+                SettingsRow(String(localized: "24-hour clock")) {
+                    RowSwitch(String(localized: "24-hour clock"), isOn: $store.settings.menuBar.is24Hour)
+                }
+                .enabledLook(store.settings.menuBar.isOn(.time))
             }
-            Section {
-                TextField("Pattern", text: $store.settings.menuBar.customPattern, prompt: Text(verbatim: "EEE d MMM HH:mm"))
-                    .labelsHidden()
-                    .font(.system(.body, design: .monospaced))
-            } header: {
-                Text("Custom Pattern")
-            } footer: {
-                Text("Used exactly as written: EEE weekday, d day, MMM month, yyyy year, HH:mm time. Leave empty to use the list above.")
-                    .foregroundStyle(.secondary)
+            SettingsGroup(String(localized: "Custom Pattern"),
+                          footer: String(localized: "Used exactly as written: EEE weekday, d day, MMM month, yyyy year, HH:mm time. Leave empty to use the list above.")) {
+                SettingsRow(String(localized: "Pattern")) {
+                    TextField("Pattern", text: $store.settings.menuBar.customPattern, prompt: Text(verbatim: "EEE d MMM HH:mm"))
+                        .labelsHidden()
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.body, design: .monospaced))
+                        .frame(width: 200)
+                }
             }
         }
-        .formStyle(.grouped)
     }
 
-    private func row(_ item: MenuBarItem) -> some View {
-        HStack(spacing: 8) {
+    private func row(_ component: MenuBarComponent) -> some View {
+        let ink = Ink(colorScheme)
+        return HStack(spacing: PUI.Space.m) {
             Image(systemName: "line.3.horizontal")
-                .foregroundStyle(.tertiary)
-            Toggle(item.component.title, isOn: Binding(
-                get: { store.settings.menuBar.isOn(item.component) },
-                set: { store.settings.menuBar.set(item.component, isOn: $0) }))
+                .foregroundStyle(ink.tertiary)
+            Text(component.title)
+                .font(PUI.Font.body)
+                .foregroundStyle(ink.primary)
+            Spacer(minLength: PUI.Space.l)
+            Toggle(component.title, isOn: Binding(
+                get: { store.settings.menuBar.isOn(component) },
+                set: { store.settings.menuBar.set(component, isOn: $0) }))
+                .toggleStyle(PUISwitchStyle())
+                .labelsHidden()
         }
+        .padding(.horizontal, PUI.Space.l)
+        .frame(minHeight: 38)
         .contentShape(Rectangle())
         .background {
             // The row the dragged component will take the place of.
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.accentColor.opacity(dropTarget == item.component ? 0.15 : 0))
-                .padding(-4)
+            RoundedRectangle(cornerRadius: PUI.Radius.row, style: .continuous)
+                .fill(accent.color.opacity(dropTarget == component ? 0.15 : 0))
+                .padding(PUI.Space.xxs)
         }
-        .draggable(item.component.rawValue) {
-            Text(item.component.title).padding(6)
+        .draggable(component.rawValue) {
+            Text(component.title).padding(PUI.Space.s)
         }
         .dropDestination(for: String.self) { values, _ in
             guard let raw = values.first, let moved = MenuBarComponent(rawValue: raw) else { return false }
-            move(moved, onto: item.component)
+            move(moved, onto: component)
             return true
         } isTargeted: { targeted in
-            if targeted { dropTarget = item.component } else if dropTarget == item.component { dropTarget = nil }
+            if targeted { dropTarget = component } else if dropTarget == component { dropTarget = nil }
         }
     }
 
@@ -85,16 +95,11 @@ struct MenuBarSettingsView: View {
         store.settings.menuBar.items = items
     }
 
+    /// The title as the status item draws it, at the chosen size.
     private var preview: some View {
-        HStack {
-            Text("Preview")
-            Spacer()
+        PartitiUI.MenuBarItem(highlighted: true, color: Ink(colorScheme).primary) {
             Text(store.settings.menuBarTitle(now: .now))
-                .font(.system(size: store.settings.menuBar.textSize, weight: .medium))
-                .monospacedDigit()
-                .padding(.horizontal, 10)
-                .frame(height: 24)
-                .glassEffect(.regular, in: .capsule)
+                .font(.system(size: store.settings.menuBar.textSize, weight: .medium).monospacedDigit())
         }
     }
 }

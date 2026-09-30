@@ -424,6 +424,16 @@
         }
       }
     },
+    "Check for updates now" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla ora gli aggiornamenti"
+          }
+        }
+      }
+    },
     "Choose a calendar for the event." : {
       "localizations" : {
         "it" : {
@@ -1512,16 +1522,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cerca città o fusi orari"
-          }
-        }
-      }
-    },
-    "Select a Section" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Seleziona una sezione"
           }
         }
       }

@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// Notifications settings: whether to be told before meetings, how early, and for which
@@ -10,40 +11,41 @@ struct NotificationsSettingsView: View {
     var body: some View {
         @Bindable var store = store
         let alerts = store.settings.meetingAlerts
-        Form {
-            PaneHeader(pane: .notifications, subtitle: "A heads-up shortly before your meetings start.")
-            Section {
-                Toggle("Notify before meetings", isOn: Binding(
-                    get: { alerts.isEnabled },
-                    set: { enabled in
-                        store.settings.meetingAlerts.isEnabled = enabled
-                        if enabled { Task { await notifier.requestAuthorization() } }
-                    }))
-                Picker("Notify me", selection: $store.settings.meetingAlerts.minutesBefore) {
-                    ForEach(MeetingAlertSettings.leadTimes, id: \.self) { minutes in
-                        Text("\(minutes) minutes before").tag(minutes)
-                    }
+        KelloPane(pane: .notifications, subtitle: String(localized: "A heads-up shortly before your meetings start.")) {
+            SettingsGroup(String(localized: "Meetings"),
+                          footer: String(localized: "For events in the calendars Kello shows. Click a notification to open that day, or Join to open the call.")) {
+                SettingsRow(String(localized: "Notify before meetings")) {
+                    RowSwitch(String(localized: "Notify before meetings"), isOn: Binding(
+                        get: { alerts.isEnabled },
+                        set: { enabled in
+                            store.settings.meetingAlerts.isEnabled = enabled
+                            if enabled { Task { await notifier.requestAuthorization() } }
+                        }))
                 }
-                .disabled(!alerts.isEnabled)
-                Toggle("Only events with a call link", isOn: $store.settings.meetingAlerts.onlyWithMeetingLink)
-                    .disabled(!alerts.isEnabled)
-            } header: {
-                Text("Meetings")
-            } footer: {
-                Text("For events in the calendars Kello shows. Click a notification to open that day, or Join to open the call.")
-                    .foregroundStyle(.secondary)
+                SettingsRow(String(localized: "Notify me")) {
+                    Picker("Notify me", selection: $store.settings.meetingAlerts.minutesBefore) {
+                        ForEach(MeetingAlertSettings.leadTimes, id: \.self) { minutes in
+                            Text("\(minutes) minutes before").tag(minutes)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                .enabledLook(alerts.isEnabled)
+                SettingsRow(String(localized: "Only events with a call link")) {
+                    RowSwitch(String(localized: "Only events with a call link"), isOn: $store.settings.meetingAlerts.onlyWithMeetingLink)
+                }
+                .enabledLook(alerts.isEnabled)
             }
             if alerts.isEnabled && notifier.authorization == .denied {
-                Section {
-                    LabeledContent {
+                SettingsGroup {
+                    SettingsRow(String(localized: "Notifications are turned off for Kello")) {
                         Button("Open System Settings…") { notifier.openSystemSettings() }
-                    } label: {
-                        Label("Notifications are turned off for Kello", systemImage: "bell.slash")
+                            .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
                     }
                 }
             }
         }
-        .formStyle(.grouped)
         .task { await notifier.refreshAuthorization() }
     }
 }

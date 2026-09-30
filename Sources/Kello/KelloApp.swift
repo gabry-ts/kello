@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 @main
@@ -91,14 +92,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .environment(store)
             .environment(calendars)
             .environment(notifier)
-        let window = makeWindow(view, size: NSSize(width: 640, height: 420), minSize: NSSize(width: 560, height: 360))
+        let window = makeWindow(view, size: PUI.Window.settings, minSize: PUI.Window.settingsMin)
         self.window = window
         window.makeKeyAndOrderFront(nil)
     }
 
     private func makeWindow(_ view: some View, size: NSSize, minSize: NSSize) -> NSWindow {
         let controller = NSHostingController(rootView: view)
-        controller.sceneBridgingOptions = [.toolbars]
         let window = NSWindow(contentViewController: controller)
         window.title = "Kello"
         window.isOpaque = false
