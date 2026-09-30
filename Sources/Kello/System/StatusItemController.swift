@@ -63,9 +63,10 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         // Rebuilding the title only when it changes avoids needless relayout.
         guard title != shown else { return }
         shown = title
-        // Drawn at a medium weight like the system clock, at the size chosen in settings.
+        // Partiti UI's menu bar type, medium with monospaced digits so the title keeps its
+        // width as the minutes change, at the size chosen in settings.
         button.attributedTitle = NSAttributedString(string: title.text, attributes: [
-            .font: NSFont.systemFont(ofSize: title.size, weight: .medium),
+            .font: NSFont.monospacedDigitSystemFont(ofSize: title.size, weight: .medium),
         ])
         button.setAccessibilityLabel("Kello")
     }
