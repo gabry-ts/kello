@@ -48,15 +48,6 @@ struct AgendaToolbar: View {
     }
 }
 
-extension View {
-    /// Dims a whole settings row, title included: `SettingsRow`'s own title doesn't read
-    /// `isEnabled`, and neither does a native `Picker`, so a control that fades itself when
-    /// disabled still needs this to keep the row it sits in one consistent look.
-    func enabledLook(_ isEnabled: Bool) -> some View {
-        disabled(!isEnabled).opacity(isEnabled ? 1 : 0.4)
-    }
-}
-
 /// Today at a glance: overdue reminders and today's events, each a small chip led by the
 /// colors involved.
 struct StatusRow: View {

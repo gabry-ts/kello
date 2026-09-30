@@ -41,19 +41,23 @@ struct CalendarsSettingsView: View {
         let selection = Binding<String>(
             get: { store.settings.holidayCalendar.resolvedID(among: all) ?? "" },
             set: { store.settings.holidayCalendar = $0.isEmpty ? .none : .calendar($0) })
-        return Picker("Holidays calendar", selection: selection) {
-            Text("None").tag("")
-            ForEach(CalendarGroup.grouped(all)) { group in
-                Section(group.sourceTitle) {
-                    ForEach(group.calendars) { calendar in
-                        Label { Text(calendar.title) } icon: { Image(nsImage: .swatch(calendar.color)) }
-                            .tag(calendar.id)
+        let current = all.first { $0.id == selection.wrappedValue }
+        return PopUpMenu(current.map { Text(verbatim: $0.title) } ?? Text("None")) {
+            Picker("Holidays calendar", selection: selection) {
+                Text("None").tag("")
+                ForEach(CalendarGroup.grouped(all)) { group in
+                    Section(group.sourceTitle) {
+                        ForEach(group.calendars) { calendar in
+                            Label { Text(calendar.title) } icon: { Image(nsImage: .swatch(calendar.color)) }
+                                .tag(calendar.id)
+                        }
                     }
                 }
             }
+            .pickerStyle(.inline)
+            .labelsHidden()
         }
-        .labelsHidden()
-        .fixedSize()
+        .accessibilityLabel(Text("Holidays calendar"))
     }
 
     private var sections: [(id: String, title: String, calendars: [CalendarInfo])] {
@@ -67,27 +71,12 @@ struct CalendarsSettingsView: View {
 /// A calendar's color swatch, title and visibility switch, as one row of a group.
 struct CalendarToggle: View {
     @Environment(SettingsStore.self) private var store
-    @Environment(\.colorScheme) private var colorScheme
     let calendar: CalendarInfo
 
     var body: some View {
-        let color = Color(calendar.color)
-        HStack(spacing: PUI.Space.m + 2) {
-            Circle()
-                .fill(LinearGradient(colors: [PUI.mix(color, with: .white, by: 0.15), color], startPoint: .top, endPoint: .bottom))
-                .overlay(Circle().strokeBorder(Color.black.opacity(0.12), lineWidth: 0.5))
-                .frame(width: 12, height: 12)
-            Text(calendar.title)
-                .font(PUI.Font.body)
-                .foregroundStyle(Ink(colorScheme).primary)
-            Spacer(minLength: PUI.Space.l)
-            Toggle(calendar.title, isOn: Binding(
-                get: { store.settings.isCalendarVisible(calendar.id) },
-                set: { store.settings.setCalendar(calendar.id, visible: $0) }))
-                .toggleStyle(PUISwitchStyle(showsLabel: false))
-        }
-        .padding(.horizontal, PUI.Space.l)
-        .frame(minHeight: 38)
+        SwitchRow(calendar.title, symbol: "circle.fill", symbolColor: Color(calendar.color), isOn: Binding(
+            get: { store.settings.isCalendarVisible(calendar.id) },
+            set: { store.settings.setCalendar(calendar.id, visible: $0) }))
     }
 }
 

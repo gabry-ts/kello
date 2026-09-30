@@ -14,30 +14,20 @@ struct NotificationsSettingsView: View {
         KelloPane(pane: .notifications, subtitle: String(localized: "A heads-up shortly before your meetings start.")) {
             SettingsGroup(String(localized: "Meetings"),
                           footer: String(localized: "For events in the calendars Kello shows. Click a notification to open that day, or Join to open the call.")) {
-                SettingsRow(String(localized: "Notify before meetings")) {
-                    Toggle(String(localized: "Notify before meetings"), isOn: Binding(
-                        get: { alerts.isEnabled },
-                        set: { enabled in
-                            store.settings.meetingAlerts.isEnabled = enabled
-                            if enabled { Task { await notifier.requestAuthorization() } }
-                        }))
-                        .toggleStyle(PUISwitchStyle(showsLabel: false))
-                }
+                SwitchRow(String(localized: "Notify before meetings"), isOn: Binding(
+                    get: { alerts.isEnabled },
+                    set: { enabled in
+                        store.settings.meetingAlerts.isEnabled = enabled
+                        if enabled { Task { await notifier.requestAuthorization() } }
+                    }))
                 SettingsRow(String(localized: "Notify me")) {
-                    Picker("Notify me", selection: $store.settings.meetingAlerts.minutesBefore) {
-                        ForEach(MeetingAlertSettings.leadTimes, id: \.self) { minutes in
-                            Text("\(minutes) minutes before").tag(minutes)
-                        }
-                    }
-                    .labelsHidden()
-                    .fixedSize()
+                    PopUpMenu(selection: $store.settings.meetingAlerts.minutesBefore,
+                              options: MeetingAlertSettings.leadTimes.map { ($0, Text("\($0) minutes before")) })
+                        .accessibilityLabel(Text("Notify me"))
                 }
-                .enabledLook(alerts.isEnabled)
-                SettingsRow(String(localized: "Only events with a call link")) {
-                    Toggle(String(localized: "Only events with a call link"), isOn: $store.settings.meetingAlerts.onlyWithMeetingLink)
-                        .toggleStyle(PUISwitchStyle(showsLabel: false))
-                }
-                .enabledLook(alerts.isEnabled)
+                .disabled(!alerts.isEnabled)
+                SwitchRow(String(localized: "Only events with a call link"), isOn: $store.settings.meetingAlerts.onlyWithMeetingLink)
+                    .disabled(!alerts.isEnabled)
             }
             if alerts.isEnabled && notifier.authorization == .denied {
                 SettingsGroup {

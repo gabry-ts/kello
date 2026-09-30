@@ -13,10 +13,7 @@ struct GeneralView: View {
         @Bindable var store = store
         KelloPane(pane: .general, subtitle: String(localized: "How the calendar in the menu bar popover is laid out.")) {
             SettingsGroup(String(localized: "Startup")) {
-                SettingsRow(String(localized: "Launch at login")) {
-                    Toggle(String(localized: "Launch at login"), isOn: $launchAtLogin)
-                        .toggleStyle(PUISwitchStyle(showsLabel: false))
-                }
+                SwitchRow(String(localized: "Launch at login"), isOn: $launchAtLogin)
                 if loginItemStatus == .requiresApproval {
                     SettingsRow(String(localized: "Waiting for your approval in System Settings")) {
                         Button("Open Login Items…") { LoginItem.openSystemSettings() }
@@ -31,18 +28,14 @@ struct GeneralView: View {
             .onAppear { loginItemStatus = LoginItem.status }
             SettingsGroup(String(localized: "Calendar")) {
                 SettingsRow(String(localized: "First day of the week")) {
-                    Picker("First day of the week", selection: $store.settings.firstWeekday) {
-                        Text("System Default").tag(FirstWeekday.system)
-                        Text("Monday").tag(FirstWeekday.monday)
-                        Text("Sunday").tag(FirstWeekday.sunday)
-                    }
-                    .labelsHidden()
-                    .fixedSize()
+                    PopUpMenu(selection: $store.settings.firstWeekday, options: [
+                        (FirstWeekday.system, Text("System Default")),
+                        (FirstWeekday.monday, Text("Monday")),
+                        (FirstWeekday.sunday, Text("Sunday")),
+                    ])
+                    .accessibilityLabel(Text("First day of the week"))
                 }
-                SettingsRow(String(localized: "Show week numbers")) {
-                    Toggle(String(localized: "Show week numbers"), isOn: $store.settings.showWeekNumbers)
-                        .toggleStyle(PUISwitchStyle(showsLabel: false))
-                }
+                SwitchRow(String(localized: "Show week numbers"), isOn: $store.settings.showWeekNumbers)
             }
             SettingsGroup(String(localized: "Keyboard Shortcut"), footer: String(localized: "Opens the calendar from any app.")) {
                 SettingsRow(String(localized: "Show or hide Kello")) {

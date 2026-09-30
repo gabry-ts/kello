@@ -52,16 +52,12 @@ struct TimeZonesSettingsView: View {
             }
             SettingsGroup(String(localized: "Menu Bar")) {
                 SettingsRow(String(localized: "Also show in the menu bar")) {
-                    Picker("Also show in the menu bar", selection: $store.settings.menuBarTimeZone) {
-                        Text("None").tag(String?.none)
-                        ForEach(store.settings.timeZones) { zone in
-                            Text(zone.displayName).tag(Optional(zone.identifier))
-                        }
-                    }
-                    .labelsHidden()
-                    .fixedSize()
+                    PopUpMenu(selection: $store.settings.menuBarTimeZone,
+                              options: [(String?.none, Text("None"))]
+                                  + store.settings.timeZones.map { (Optional($0.identifier), Text(verbatim: $0.displayName)) })
+                        .accessibilityLabel(Text("Also show in the menu bar"))
                 }
-                .enabledLook(!store.settings.timeZones.isEmpty)
+                .disabled(store.settings.timeZones.isEmpty)
             }
         }
         .sheet(isPresented: $isPicking) {

@@ -15,8 +15,12 @@ struct MenuBarSettingsView: View {
             SettingsGroup {
                 SettingsRow(String(localized: "Preview")) { preview }
                 SettingsRow(String(localized: "Text Size")) {
-                    Slider(value: $store.settings.menuBar.textSize, in: MenuBarSettings.textSizeRange, step: 0.5)
-                        .frame(width: 160)
+                    HStack(spacing: PUI.Space.m) {
+                        PUISlider(value: $store.settings.menuBar.textSize, in: MenuBarSettings.textSizeRange, step: 0.5)
+                            .frame(width: 160)
+                            .accessibilityLabel(Text("Text Size"))
+                        ValueText(Text(store.settings.menuBar.textSize, format: .number.precision(.fractionLength(0...1))), width: 30)
+                    }
                 }
             }
             SettingsGroup(String(localized: "Shown in the Menu Bar"),
@@ -24,16 +28,10 @@ struct MenuBarSettingsView: View {
                 ReorderableRows($store.settings.menuBar.items, isOn: \.isOn) { item in
                     ReorderableLabel(item.component.title)
                 }
-                SettingsRow(String(localized: "Month name (instead of number)")) {
-                    Toggle(String(localized: "Month name (instead of number)"), isOn: $store.settings.menuBar.showMonthName)
-                        .toggleStyle(PUISwitchStyle(showsLabel: false))
-                }
-                .enabledLook(store.settings.menuBar.isOn(.date))
-                SettingsRow(String(localized: "24-hour clock")) {
-                    Toggle(String(localized: "24-hour clock"), isOn: $store.settings.menuBar.is24Hour)
-                        .toggleStyle(PUISwitchStyle(showsLabel: false))
-                }
-                .enabledLook(store.settings.menuBar.isOn(.time))
+                SwitchRow(String(localized: "Month name (instead of number)"), isOn: $store.settings.menuBar.showMonthName)
+                    .disabled(!store.settings.menuBar.isOn(.date))
+                SwitchRow(String(localized: "24-hour clock"), isOn: $store.settings.menuBar.is24Hour)
+                    .disabled(!store.settings.menuBar.isOn(.time))
             }
             SettingsGroup(String(localized: "Custom Pattern"),
                           footer: String(localized: "Used exactly as written: EEE weekday, d day, MMM month, yyyy year, HH:mm time. Leave empty to use the list above.")) {
