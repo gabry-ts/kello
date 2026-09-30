@@ -1,4 +1,5 @@
 import Observation
+import PartitiUI
 import SwiftUI
 
 /// Which page the settings window shows, so the popover can open it on a given page.
@@ -75,7 +76,7 @@ struct SettingsView: View {
         Label {
             Text(pane.title)
         } icon: {
-            IconTile(systemImage: pane.icon, tint: pane.tint, size: 22)
+            IconTile(pane.icon, color: pane.tint)
         }
         .tag(pane)
     }
@@ -103,22 +104,6 @@ struct SettingsView: View {
     }
 }
 
-/// A white SF Symbol on a rounded, gently shaded color tile.
-struct IconTile: View {
-    let systemImage: String
-    let tint: Color
-    var size: CGFloat = 22
-
-    var body: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: size * 0.52, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: size, height: size)
-            .background(tint.gradient, in: .rect(cornerRadius: size * 0.27, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: size * 0.27, style: .continuous).strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
-    }
-}
-
 /// The top of each settings pane: its icon tile, title and a line about it.
 struct PaneHeader: View {
     let pane: SettingsView.Pane
@@ -127,7 +112,7 @@ struct PaneHeader: View {
     var body: some View {
         Section {
             HStack(spacing: 12) {
-                IconTile(systemImage: pane.icon, tint: pane.tint, size: 40)
+                IconTile(pane.icon, color: pane.tint, size: PUI.Window.paneTile)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(pane.title)
                         .font(.system(size: 15, weight: .semibold))

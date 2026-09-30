@@ -1,5 +1,6 @@
 import AppKit
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// `Kello --render-snapshots <dir>` renders the popover with sample data, in light and
@@ -93,7 +94,7 @@ enum Snapshots {
     /// Rows with calls, the upcoming one drawn hovered so its Join button shows.
     private static var callRows: some View {
         let calls = SampleData.events(now: SampleData.now).filter { $0.meetingURL != nil }
-        return VStack(spacing: Theme.rowSpacing) {
+        return VStack(spacing: PUI.Popover.rowGap) {
             ForEach(Array(calls.enumerated()), id: \.element.id) { index, event in
                 EventRow(event: event, now: SampleData.now, showsHoverState: index == 1)
             }
@@ -131,8 +132,10 @@ enum Snapshots {
     /// colorful desktop-like backdrop. A real offscreen NSPopover can't be used because its
     /// glass samples what's behind it, which offscreen is nothing.
     private static func snapPopover(_ view: some View, name: String, dark: Bool, dir: URL) {
-        let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: PUI.Radius.popover, style: .continuous)
         let framed = view
+            .puiAccent(.kello)
+            .puiGlassRendering(.painted)
             .background {
                 ZStack {
                     Wallpaper(dark: dark).blur(radius: 40, opaque: true)
@@ -164,8 +167,8 @@ enum Snapshots {
         window.close()
     }
 
-    private static func snapWindow(_ view: some View, name: String, dark: Bool, dir: URL, size: NSSize = NSSize(width: 640, height: 460)) {
-        let controller = NSHostingController(rootView: view)
+    private static func snapWindow(_ view: some View, name: String, dark: Bool, dir: URL, size: NSSize = PUI.Window.settings) {
+        let controller = NSHostingController(rootView: view.puiAccent(.kello).puiGlassRendering(.painted))
         controller.sceneBridgingOptions = [.toolbars]
         let window = NSWindow(contentViewController: controller)
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]

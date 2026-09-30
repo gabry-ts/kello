@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// What the popover shows in place of the grid and agenda.
@@ -9,9 +10,9 @@ enum EditorRoute: Hashable {
     case quickEntry(calendarID: String)
 }
 
-/// The menu bar popover: the month grid, the permission prompt while needed, the
-/// toolbar, today's counts, and the agenda or the reminders. Search and the editors
-/// replace all of it while open.
+/// The menu bar popover: the month as its header, the grid, the permission prompt while
+/// needed, the toolbar, today's counts, the agenda or the reminders, and the footer.
+/// Search and the editors replace all of it while open.
 struct MenuContent: View {
     let openSettings: () -> Void
     /// Replaces the clock, so snapshots show the same moment every time.
@@ -30,9 +31,11 @@ struct MenuContent: View {
         ZStack(alignment: .top) {
             if let route {
                 editor(route)
+                    .popoverFrame()
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
             } else if isSearching {
                 SearchView(now: fixedNow ?? .now, onClose: { isSearching = false }, onSelect: open)
+                    .popoverFrame()
                     .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
             } else {
                 // Redrawn every minute so the "now" marker, past events and counts stay current.
@@ -42,11 +45,11 @@ struct MenuContent: View {
                 .transition(reduceMotion ? .opacity : .move(edge: .leading).combined(with: .opacity))
             }
         }
-        .animation(Theme.spring(reduceMotion), value: route)
-        .animation(Theme.spring(reduceMotion), value: isSearching)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: route)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: isSearching)
         // Reminders only come asynchronously, so they're fetched again on every change.
         .task(id: calendars.revision) { await calendars.loadReminders() }
-        .popoverFrame()
+        .puiAccent(.kello)
         .onAppear { calendars.refreshAccess() }
         .onChange(of: popover.requestedDay, initial: true) { _, day in
             guard let day else { return }
@@ -71,7 +74,9 @@ struct MenuContent: View {
         let canReadEvents = calendars.eventsAccess == .granted
         let canReadReminders = calendars.remindersAccess == .granted
 
-        return VStack(alignment: .leading, spacing: Theme.spacing) {
+        return PopoverScaffold(width: PUI.Popover.compact) {
+            MonthHeader(viewModel: viewModel)
+        } content: {
             MonthGridView(
                 viewModel: viewModel,
                 dots: AgendaFormat.dotColors(days: gridDays, events: gridEvents).mapValues { $0.map(Color.init) },
@@ -80,8 +85,7 @@ struct MenuContent: View {
             if calendars.needsPermissionPrompt {
                 PermissionView()
             }
-            PopoverToolbar(
-                openSettings: openSettings,
+            AgendaToolbar(
                 search: canReadEvents ? { isSearching = true } : nil,
                 newEvent: canReadEvents ? { newEvent(on: viewModel.selectedDay, now: now) } : nil,
                 quickEvent: canReadEvents ? { route = .quickEntry(calendarID: defaultCalendarID) } : nil,
@@ -98,9 +102,9 @@ struct MenuContent: View {
                 AgendaView(
                     sections: Agenda.sections(days: days, events: [], reminders: reminders, now: now),
                     now: now,
-                    emptyText: "No Reminders",
-                    emptyImage: "checklist.checked",
-                    fixedHeight: Theme.listHeight,
+                    empty: .init(title: String(localized: "No Reminders"), message: String(localized: "Nothing due."),
+                                 symbol: "checklist.checked"),
+                    fixedHeight: KelloStyle.listHeight,
                     openReminder: { route = .reminder(ReminderDraft($0)) },
                     completeReminder: complete)
             } else if canReadEvents {
@@ -111,11 +115,13 @@ struct MenuContent: View {
                                               holidays: holidays(in: agendaDays, calendarID: holidayCalendarID), now: now),
                     now: now,
                     nextUp: showsToday ? Agenda.nextUp(events: todayEvents, now: now) : nil,
-                    fixedHeight: Theme.listHeight,
+                    fixedHeight: KelloStyle.listHeight,
                     openEvent: { event in
                         if let draft = calendars.draft(for: event) { route = .event(draft) }
                     })
             }
+        } footer: {
+            KelloFooter(openSettings: openSettings)
         }
     }
 
@@ -183,11 +189,10 @@ struct MenuContent: View {
 }
 
 extension View {
-    /// The popover's width and margins, shared by the agenda and the editors.
+    /// The popover's width and margin, for search and the editors, which replace the
+    /// whole scaffold while open.
     func popoverFrame() -> some View {
-        padding(.horizontal, Theme.popoverPadding)
-            .padding(.top, 12)
-            .padding(.bottom, Theme.popoverPadding)
-            .frame(width: Theme.popoverWidth)
+        padding(PUI.Popover.margin)
+            .frame(width: PUI.Popover.compact)
     }
 }

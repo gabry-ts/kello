@@ -1,5 +1,6 @@
 import KelloCore
 import Observation
+import PartitiUI
 import SwiftUI
 
 /// Which month is displayed and which day is selected. A new instance is created every
@@ -51,11 +52,57 @@ final class MonthGridViewModel {
     }
 }
 
-/// The month grid shown in the popover: the month and year with a "‹ Today ›" pill, then
-/// a glass card with single-letter weekdays and the days, adjacent months dimmed.
+/// The popover's header: the month and year, with a "‹ Today ›" glass capsule.
+struct MonthHeader: View {
+    @Bindable var viewModel: MonthGridViewModel
+    @Environment(\.puiAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let ink = Ink(colorScheme)
+        HStack(spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: PUI.Space.xs) {
+                Text(viewModel.referenceDate.formatted(.dateTime.month(.wide)))
+                    .font(PUI.Font.paneTitle)
+                    .foregroundStyle(ink.primary)
+                Text(viewModel.referenceDate.formatted(.dateTime.year()))
+                    .font(.system(size: 15))
+                    .foregroundStyle(ink.secondary)
+                    .monospacedDigit()
+            }
+            .contentTransition(.numericText(countsDown: !viewModel.isMovingForward))
+            .padding(.leading, PUI.Space.xs)
+            .lineLimit(1)
+            Spacer(minLength: PUI.Space.m)
+            GlassCapsule {
+                IconButton("chevron.left") { viewModel.goToPreviousMonth() }
+                    .help("Previous Month")
+                Button { viewModel.goToToday() } label: {
+                    Text("Today")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(accent.legible(colorScheme))
+                        .padding(.horizontal, PUI.Space.xs)
+                        .frame(height: PUI.Control.small)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .help("Today")
+                IconButton("chevron.right") { viewModel.goToNextMonth() }
+                    .help("Next Month")
+            }
+        }
+        .frame(height: PUI.Control.small)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: viewModel.referenceDate)
+    }
+}
+
+/// The month grid shown in the popover: a card with single-letter weekdays and the days,
+/// adjacent months dimmed.
 struct MonthGridView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var viewModel: MonthGridViewModel
     /// Up to four calendar colors per day (keyed by start of day), drawn as dots.
     var dots: [Date: [Color]] = [:]
@@ -64,9 +111,7 @@ struct MonthGridView: View {
     /// Double clicking a day creates an event on it; nil turns it off.
     var onDoubleClick: ((Date) -> Void)?
 
-    static let rowHeight = Theme.cellHeight
-    private static let weekNumberWidth: CGFloat = 16
-    private static let cardPadding: CGFloat = 6
+    static let rowHeight = KelloStyle.cellHeight
 
     private var calendar: Calendar { .current }
 
@@ -76,24 +121,22 @@ struct MonthGridView: View {
         let month = calendar.component(.month, from: viewModel.referenceDate)
         let grid = MonthGrid.rows(year: year, month: month, firstWeekday: settings.firstWeekday)
 
-        VStack(alignment: .leading, spacing: 6) {
-            header
-            VStack(spacing: 0) {
-                weekdayRow(grid, showWeekNumbers: settings.showWeekNumbers)
-                ZStack {
-                    monthBody(grid, showWeekNumbers: settings.showWeekNumbers)
-                        .id(year * 100 + month)
-                        .transition(monthTransition)
-                }
-                .frame(height: Self.rowHeight * CGFloat(grid.weeks.count), alignment: .top)
-                .clipped()
+        VStack(spacing: 0) {
+            weekdayRow(grid, showWeekNumbers: settings.showWeekNumbers)
+            ZStack {
+                monthBody(grid, showWeekNumbers: settings.showWeekNumbers)
+                    .id(year * 100 + month)
+                    .transition(monthTransition)
             }
-            .padding(.horizontal, Self.cardPadding)
-            .padding(.top, 2)
-            .padding(.bottom, 5)
-            .surface()
+            .frame(height: Self.rowHeight * CGFloat(grid.weeks.count), alignment: .top)
+            .clipped()
         }
-        .animation(Theme.spring(reduceMotion), value: viewModel.referenceDate)
+        .padding(.horizontal, PUI.Space.s)
+        .padding(.top, PUI.Space.xs)
+        .padding(.bottom, PUI.Space.s)
+        .frame(maxWidth: .infinity)
+        .puiSurface()
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: viewModel.referenceDate)
     }
 
     private var monthTransition: AnyTransition {
@@ -103,53 +146,16 @@ struct MonthGridView: View {
             removal: .move(edge: viewModel.isMovingForward ? .leading : .trailing).combined(with: .opacity))
     }
 
-    private var header: some View {
-        HStack(spacing: 0) {
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(viewModel.referenceDate.formatted(.dateTime.month(.wide)))
-                    .font(.system(size: 15, weight: .semibold))
-                Text(viewModel.referenceDate.formatted(.dateTime.year()))
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            }
-            .contentTransition(.numericText(countsDown: !viewModel.isMovingForward))
-            .padding(.leading, 3)
-            .lineLimit(1)
-            Spacer(minLength: 8)
-            HStack(spacing: 0) {
-                Button { viewModel.goToPreviousMonth() } label: {
-                    Image(systemName: "chevron.left")
-                }
-                .help("Previous Month")
-                Button { viewModel.goToToday() } label: {
-                    Text("Today")
-                        .font(.system(size: 11, weight: .semibold))
-                        .padding(.horizontal, 3)
-                }
-                .help("Today")
-                Button { viewModel.goToNextMonth() } label: {
-                    Image(systemName: "chevron.right")
-                }
-                .help("Next Month")
-            }
-            .buttonStyle(.icon)
-            .padding(1)
-            .glassEffect(.regular, in: .capsule)
-            .glassEdge(Capsule())
-        }
-        .frame(height: Theme.controlSize)
-    }
-
     private func weekdayRow(_ grid: MonthGrid, showWeekNumbers: Bool) -> some View {
-        HStack(spacing: 0) {
+        let ink = Ink(colorScheme)
+        return HStack(spacing: 0) {
             if showWeekNumbers {
-                Color.clear.frame(width: Self.weekNumberWidth, height: 1)
+                Color.clear.frame(width: KelloStyle.weekNumberWidth, height: 1)
             }
             ForEach(grid.weeks.first?.days ?? [], id: \.date) { day in
                 Text(calendar.veryShortWeekdaySymbols[calendar.component(.weekday, from: day.date) - 1])
-                    .font(.system(size: 9.5, weight: .semibold))
-                    .foregroundStyle(calendar.isDateInWeekend(day.date) ? .tertiary : .secondary)
+                    .font(PUI.Font.badge)
+                    .foregroundStyle(calendar.isDateInWeekend(day.date) ? ink.tertiary : ink.secondary)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -162,11 +168,11 @@ struct MonthGridView: View {
                 VStack(spacing: 0) {
                     ForEach(grid.weeks, id: \.self) { week in
                         Text("\(week.weekNumber)")
-                            .font(.system(size: 8.5, weight: .semibold))
+                            .font(PUI.Font.badge)
                             .monospacedDigit()
-                            .foregroundStyle(.tertiary)
-                            .padding(.top, 5)
-                            .frame(width: Self.weekNumberWidth, height: Self.rowHeight, alignment: .top)
+                            .foregroundStyle(Ink(colorScheme).tertiary)
+                            .padding(.top, PUI.Space.xs + 1)
+                            .frame(width: KelloStyle.weekNumberWidth, height: Self.rowHeight, alignment: .top)
                     }
                 }
             }
@@ -204,24 +210,25 @@ private struct DayCell: View {
     let isHoliday: Bool
     let dots: [Color]
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.puiAccent) private var accent
     @State private var isHovered = false
 
     var body: some View {
-        VStack(spacing: 1) {
+        VStack(spacing: PUI.Space.xxs) {
             Text("\(day.day)")
                 .font(.system(size: 12, weight: isToday ? .semibold : (isHoliday && day.isInCurrentMonth ? .medium : .regular)))
                 .monospacedDigit()
-                .foregroundStyle(numberStyle)
-                .frame(width: Theme.dayCircle, height: Theme.dayCircle)
+                .foregroundStyle(numberColor)
+                .frame(width: KelloStyle.dayCircle, height: KelloStyle.dayCircle)
                 .background { circle }
             HStack(spacing: 1.5) {
                 ForEach(Array(dots.prefix(4).enumerated()), id: \.offset) { _, color in
                     Circle()
                         .fill(color)
-                        .frame(width: Theme.dotSize, height: Theme.dotSize)
+                        .frame(width: KelloStyle.dotSize, height: KelloStyle.dotSize)
                 }
             }
-            .frame(height: Theme.dotSize)
+            .frame(height: KelloStyle.dotSize)
             .opacity(day.isInCurrentMonth ? 1 : 0.4)
         }
         .padding(.top, 0.5)
@@ -229,30 +236,33 @@ private struct DayCell: View {
         .frame(height: MonthGridView.rowHeight)
         .contentShape(.rect)
         .onHover { isHovered = $0 }
-        .animation(Theme.hover, value: isHovered)
+        .animation(PUI.Motion.hover, value: isHovered)
         .animation(.snappy(duration: 0.2), value: isSelected)
     }
 
-    private var numberStyle: AnyShapeStyle {
-        if isToday { return AnyShapeStyle(.white) }
-        if isHoliday { return AnyShapeStyle(Theme.holiday.opacity(day.isInCurrentMonth ? 1 : 0.35)) }
-        if !day.isInCurrentMonth { return AnyShapeStyle(.quaternary) }
-        if isSelected { return AnyShapeStyle(.tint) }
-        return isWeekend ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary)
+    private var numberColor: Color {
+        let ink = Ink(colorScheme)
+        if isToday { return .white }
+        if isHoliday { return KelloStyle.holiday(colorScheme).opacity(day.isInCurrentMonth ? 1 : 0.35) }
+        if !day.isInCurrentMonth { return ink.quaternary }
+        if isSelected { return accent.legible(colorScheme) }
+        return isWeekend ? ink.secondary : ink.primary
     }
 
     @ViewBuilder
     private var circle: some View {
+        let color = accent.color
         if isToday {
             Circle()
-                .fill(Color.accentColor.gradient)
-                .shadow(color: .accentColor.opacity(0.45), radius: 3, y: 1)
+                .fill(LinearGradient(colors: [PUI.mix(color, with: .white, by: 0.12), PUI.mix(color, with: .black, by: 0.08)],
+                                     startPoint: .top, endPoint: .bottom))
+                .shadow(color: color.opacity(0.45), radius: 3, y: 1)
         } else if isSelected {
             Circle()
-                .fill(Color.accentColor.opacity(colorScheme == .dark ? 0.22 : 0.13))
-                .overlay(Circle().strokeBorder(Color.accentColor.opacity(0.5), lineWidth: 1))
+                .fill(color.opacity(colorScheme == .dark ? 0.22 : 0.13))
+                .overlay(Circle().strokeBorder(color.opacity(0.5), lineWidth: 1))
         } else {
-            Circle().fill(.primary.opacity(isHovered ? 0.07 : 0))
+            Circle().fill(isHovered ? Ink(colorScheme).strongFill : .clear)
         }
     }
 }

@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// Searches events of visible calendars from a year ago to two years ahead, shown in place
@@ -17,9 +18,10 @@ struct SearchView: View {
     @State private var events: [CalendarEvent]?
     @State private var sections: [AgendaSection] = []
     @FocusState private var isFocused: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.spacing) {
+        VStack(alignment: .leading, spacing: PUI.Popover.cardGap) {
             header
             results
         }
@@ -43,40 +45,35 @@ struct SearchView: View {
     }
 
     private var header: some View {
-        GlassEffectContainer(spacing: 8) {
-            HStack(spacing: 8) {
-                Button(action: onClose) {
-                    GlassCircle(systemImage: "chevron.left")
-                }
-                .buttonStyle(.plain)
+        let ink = Ink(colorScheme)
+        return HStack(spacing: PUI.Space.m) {
+            GlassCircleButton("chevron.left", action: onClose)
                 .keyboardShortcut(.cancelAction)
                 .help("Back")
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                    TextField("Search Events", text: $query)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
-                        .focused($isFocused)
-                        .onSubmit(openFirst)
-                    if !query.isEmpty {
-                        Button { query = "" } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.tertiary)
-                        }
-                        .buttonStyle(.plain)
-                        .help("Clear")
+            HStack(spacing: PUI.Space.s) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundStyle(ink.secondary)
+                TextField("Search Events", text: $query)
+                    .textFieldStyle(.plain)
+                    .font(PUI.Font.callout)
+                    .focused($isFocused)
+                    .onSubmit(openFirst)
+                if !query.isEmpty {
+                    Button { query = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(ink.tertiary)
                     }
+                    .buttonStyle(.plain)
+                    .help("Clear")
                 }
-                .padding(.horizontal, 9)
-                .frame(height: Theme.controlSize)
-                .glassEffect(.regular, in: .capsule)
-                .glassEdge(Capsule())
             }
+            .padding(.horizontal, PUI.Space.m + 1)
+            .frame(height: PUI.Control.small)
+            .puiGlass(Capsule())
         }
-        .frame(height: Theme.controlSize)
+        .frame(height: PUI.Control.small)
     }
 
     @ViewBuilder
@@ -85,11 +82,14 @@ struct SearchView: View {
             ProgressView()
                 .controlSize(.small)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .padding(.vertical, PUI.Space.xl)
         } else if EventMatcher(query: query).isEmpty {
-            EmptyState(text: "Titles, locations and notes", systemImage: "magnifyingglass")
+            EmptyState(symbol: "magnifyingglass", title: String(localized: "Search Events"),
+                       message: String(localized: "Titles, locations and notes"))
         } else {
-            AgendaView(sections: sections, now: now, emptyText: "No Results", emptyImage: "magnifyingglass",
+            AgendaView(sections: sections, now: now,
+                       empty: .init(title: String(localized: "No Results"), message: String(localized: "Try another word."),
+                                    symbol: "magnifyingglass"),
                        maxHeight: 400, openEvent: onSelect)
         }
     }

@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// A run of reminders sharing one glass card, separated by hairlines.
@@ -17,8 +18,8 @@ struct ReminderGroup: View {
                 ReminderRow(reminder: reminder, now: now, onComplete: { onComplete(reminder) }) { onOpen(reminder) }
             }
         }
-        .clipShape(.rect(cornerRadius: Theme.groupRadius, style: .continuous))
-        .surface(radius: Theme.groupRadius)
+        .clipShape(.rect(cornerRadius: PUI.Radius.group, style: .continuous))
+        .puiSurface(radius: PUI.Radius.group)
     }
 }
 
@@ -30,12 +31,15 @@ struct ReminderRow: View {
     let onComplete: () -> Void
     var onOpen: (() -> Void)?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isChecked = false
+    @State private var isHovered = false
 
     var body: some View {
+        let ink = Ink(colorScheme)
         let isOverdue = reminder.isOverdue(now: now)
         let color = Color(reminder.color)
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: PUI.Space.m) {
             Button(action: check) {
                 Checkbox(isChecked: isChecked, color: color)
             }
@@ -49,34 +53,37 @@ struct ReminderRow: View {
                             .foregroundStyle(color)
                     }
                     Text(reminder.title)
+                        .foregroundStyle(ink.primary)
                         .strikethrough(isChecked)
                         .lineLimit(2)
                 }
-                .font(.system(size: 12.5))
+                .font(PUI.Font.body)
                 // The overdue age shares the due line, leaving the title the full width.
                 if let due = reminder.due {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline, spacing: PUI.Space.s) {
                         Text(dueText(due))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(ink.secondary)
                             .lineLimit(1)
                         Spacer(minLength: 0)
                         if isOverdue {
                             Text(AgendaFormat.overdueAge(since: due, now: now))
-                                .foregroundStyle(Theme.destructive)
+                                .foregroundStyle(ink.red)
                                 .fixedSize()
                         }
                     }
-                    .font(.system(size: 11))
+                    .font(PUI.Font.caption)
                     .monospacedDigit()
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 9)
+        .padding(.vertical, PUI.Space.s)
+        .padding(.horizontal, PUI.Space.m + 1)
         .opacity(isChecked ? 0.5 : 1)
+        .puiHoverHighlight(isHovered, radius: 0)
         .contentShape(.rect)
-        .hoverHighlight(cornerRadius: 0, opacity: 0.04)
+        .onHover { isHovered = $0 }
+        .animation(PUI.Motion.hover, value: isHovered)
         .onTapGesture { onOpen?() }
     }
 
@@ -101,7 +108,7 @@ struct ReminderRow: View {
     /// Shows the checkmark for a moment, then completes the reminder, which removes it.
     private func check() {
         guard !isChecked else { return }
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(duration: 0.3, bounce: 0.4)) { isChecked = true }
+        withAnimation(reduceMotion ? PUI.Motion.spring(reduceMotion: true) : .spring(duration: 0.3, bounce: 0.4)) { isChecked = true }
         Task {
             try? await Task.sleep(for: .milliseconds(450))
             withAnimation(.smooth) { onComplete() }
@@ -136,6 +143,6 @@ private struct Checkbox: View {
         .contentShape(.circle)
         .padding(-4)
         .onHover { isHovered = $0 }
-        .animation(Theme.hover, value: isHovered)
+        .animation(PUI.Motion.hover, value: isHovered)
     }
 }

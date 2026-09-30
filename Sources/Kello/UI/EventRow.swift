@@ -1,7 +1,8 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
-/// One event in the agenda: a rounded card washed with the calendar color, a colored
+/// One event in the agenda: a rounded row washed with the calendar color, a colored
 /// capsule on its leading edge, the title with the time on the right, then the location
 /// and the call service or link host, with a recurrence icon. Rows with a call show a
 /// Join button while hovered. Past events are dimmed.
@@ -15,66 +16,63 @@ struct EventRow: View {
     @State private var isHovered = false
 
     var body: some View {
+        let ink = Ink(colorScheme)
         let isPast = event.isPast(now: now)
         let isStruck = event.isDeclined || event.isCancelled
         let isDimmed = isPast || isStruck
         let color = Color(event.color)
-        let dark = colorScheme == .dark
-        let shape = RoundedRectangle(cornerRadius: Theme.rowRadius, style: .continuous)
-        VStack(alignment: .leading, spacing: 1) {
-            HStack(alignment: .firstTextBaseline, spacing: 5) {
-                Text(event.title)
-                    .font(.system(size: 12.5, weight: .semibold))
-                    .strikethrough(isStruck)
-                    .lineLimit(2)
-                Spacer(minLength: 4)
-                Text(AgendaFormat.timeText(start: event.start, end: event.end, isAllDay: event.isAllDay, showsTimeZone: false))
-                    .font(.system(size: 10.5, weight: .medium))
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-                    .fixedSize()
-            }
-            if let subtitle = event.displayedSubtitle {
-                Text(subtitle)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-            details
-        }
-        .padding(.leading, 9)
-        .opacity(isDimmed ? 0.5 : 1)
-        .overlay(alignment: .leading) {
+        let shape = RoundedRectangle(cornerRadius: PUI.Radius.row, style: .continuous)
+        HStack(spacing: PUI.Space.m) {
             Capsule()
                 .fill(color)
                 .frame(width: 3)
-                .opacity(isDimmed ? 0.55 : 1)
+                .padding(.vertical, 1)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(alignment: .firstTextBaseline, spacing: PUI.Space.s) {
+                    Text(event.title)
+                        .font(PUI.Font.headline)
+                        .foregroundStyle(ink.primary)
+                        .strikethrough(isStruck)
+                        .lineLimit(2)
+                    Spacer(minLength: PUI.Space.xs)
+                    Text(AgendaFormat.timeText(start: event.start, end: event.end, isAllDay: event.isAllDay, showsTimeZone: false))
+                        .font(PUI.Font.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(ink.secondary)
+                        .fixedSize()
+                }
+                if let subtitle = event.displayedSubtitle {
+                    Text(subtitle)
+                        .font(PUI.Font.caption)
+                        .foregroundStyle(ink.secondary)
+                        .lineLimit(2)
+                }
+                details(ink)
+            }
         }
-        .padding(.vertical, 6)
-        .padding(.leading, 6)
-        .padding(.trailing, 9)
+        .padding(.leading, PUI.Space.s)
+        .padding(.trailing, PUI.Space.m)
+        .padding(.vertical, PUI.Space.s)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            shape.fill(color.opacity(isDimmed ? (dark ? 0.06 : 0.05) : (dark ? 0.16 : 0.10)))
-            shape.strokeBorder(color.opacity(isDimmed ? 0.10 : 0.22), lineWidth: 0.5)
-        }
+        .opacity(isDimmed ? 0.5 : 1)
+        .puiHoverHighlight(isHovered)
+        .background(shape.fill(color.opacity(colorScheme == .dark ? 0.12 : 0.08)))
         .contentShape(shape)
-        .hoverHighlight()
         .onHover { isHovered = $0 }
-        .animation(Theme.hover, value: isHovered)
+        .animation(PUI.Motion.hover, value: isHovered)
         .onTapGesture { onOpen?() }
     }
 
     /// The call service or link host, then the recurrence icon on the right, or "Repeats"
     /// alone. While hovered, a call's Join button takes the recurrence icon's place.
     @ViewBuilder
-    private var details: some View {
+    private func details(_ ink: Ink) -> some View {
         let link = event.meetingURL ?? event.url
         let showsJoin = event.meetingURL != nil && (isHovered || showsHoverState)
         if let link {
-            HStack(spacing: 4) {
+            HStack(spacing: 3) {
                 Image(systemName: event.meetingURL != nil ? "video.fill" : "link")
-                    .font(.system(size: 8.5))
+                    .font(.system(size: 8))
                 Text(event.linkLabel ?? link.displayHost)
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -83,31 +81,33 @@ struct EventRow: View {
                         .opacity(showsJoin ? 0 : 1)
                 }
             }
-            .font(.system(size: 11))
-            .foregroundStyle(.secondary)
+            .font(PUI.Font.caption)
+            .foregroundStyle(ink.secondary)
             // An overlay, so showing the button doesn't change the row's height.
             .overlay(alignment: .trailing) {
                 if showsJoin, let meetingURL = event.meetingURL {
-                    JoinButton(url: meetingURL, isCompact: true)
+                    CallJoinButton(url: meetingURL, isCompact: true)
                         .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .trailing)))
                 }
             }
         } else if event.isRecurring {
-            HStack(spacing: 4) {
+            HStack(spacing: PUI.Space.xs) {
                 RecurrenceIcon()
                 Text("Repeats")
             }
-            .font(.system(size: 11))
-            .foregroundStyle(.tertiary)
+            .font(PUI.Font.caption)
+            .foregroundStyle(ink.tertiary)
         }
     }
 }
 
 struct RecurrenceIcon: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         Image(systemName: "repeat")
             .font(.system(size: 8.5, weight: .semibold))
-            .foregroundStyle(.tertiary)
+            .foregroundStyle(Ink(colorScheme).tertiary)
             .help("Repeats")
     }
 }
@@ -116,43 +116,28 @@ struct RecurrenceIcon: View {
 /// and the time left until the next one.
 struct NowMarker: View {
     let untilNext: TimeInterval?
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(spacing: 5) {
+        let red = Ink(colorScheme).red
+        HStack(spacing: PUI.Space.s) {
             Circle()
-                .fill(Theme.destructive)
+                .fill(red)
                 .frame(width: 6, height: 6)
-                .shadow(color: Theme.destructive.opacity(0.6), radius: 2.5)
-            Capsule()
-                .fill(LinearGradient(colors: [Theme.destructive.opacity(0.8), Theme.destructive.opacity(0.12)],
-                                     startPoint: .leading, endPoint: .trailing))
-                .frame(height: 1.5)
+                .shadow(color: red.opacity(0.6), radius: 3)
+            LinearGradient(colors: [red, red.opacity(0.1)], startPoint: .leading, endPoint: .trailing)
+                .frame(height: 1)
             if let untilNext {
                 Text("in \(AgendaFormat.compactDuration(untilNext))")
-                    .font(.system(size: 9.5, weight: .semibold))
+                    .font(PUI.Font.badge)
                     .monospacedDigit()
-                    .foregroundStyle(Theme.destructive)
-                    .padding(.horizontal, 5)
-                    .frame(height: 15)
-                    .background(Theme.destructive.opacity(0.12), in: .capsule)
+                    .foregroundStyle(red)
             }
         }
-        .padding(.leading, 2)
-        .padding(.vertical, 1)
+        .padding(.horizontal, PUI.Space.xs)
+        .frame(height: 12)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Now")
-    }
-}
-
-/// The calendar or list color running down the leading edge of a row.
-struct ColorBar: View {
-    let color: Color
-
-    var body: some View {
-        Capsule()
-            .fill(color)
-            .frame(width: 3)
-            .frame(maxHeight: .infinity)
     }
 }
 
@@ -163,43 +148,44 @@ struct NextUpCard: View {
     let now: Date
     var onOpen: (() -> Void)?
     @Environment(\.colorScheme) private var colorScheme
+    @State private var isHovered = false
 
     var body: some View {
+        let ink = Ink(colorScheme)
         let color = Color(event.color)
-        let ink = Theme.legible(color, colorScheme)
-        let dark = colorScheme == .dark
-        let shape = RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous)
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 5) {
-                Circle().fill(color).frame(width: 5, height: 5)
+        let shape = RoundedRectangle(cornerRadius: PUI.Radius.card, style: .continuous)
+        VStack(alignment: .leading, spacing: PUI.Space.xs) {
+            HStack(spacing: PUI.Space.s) {
+                Circle().fill(color).frame(width: 6, height: 6)
                 Text("Next up")
                     .textCase(.uppercase)
-                    .font(.system(size: 9, weight: .bold))
-                    .tracking(0.5)
-                    .foregroundStyle(ink)
+                    .font(PUI.Font.badge)
+                    .tracking(PUI.Font.badgeTracking)
+                    .foregroundStyle(PUI.legible(color, colorScheme))
                 Spacer()
                 HStack(spacing: 3) {
                     Image(systemName: "clock")
-                        .font(.system(size: 8.5, weight: .semibold))
+                        .font(.system(size: 9, weight: .semibold))
                     Text("in \(AgendaFormat.compactDuration(event.start.timeIntervalSince(now)))")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(PUI.Font.badge)
                         .monospacedDigit()
                 }
-                .foregroundStyle(ink)
-                .padding(.horizontal, 6)
-                .frame(height: 17)
-                .background(color.opacity(dark ? 0.20 : 0.14), in: .capsule)
+                .foregroundStyle(ink.secondary)
+                .padding(.horizontal, PUI.Space.s)
+                .frame(height: 16)
+                .background(Capsule().fill(ink.fill))
             }
             Text(event.title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(PUI.Font.headline)
+                .foregroundStyle(ink.primary)
                 .lineLimit(2)
-                .padding(.top, 5)
-            HStack(spacing: 5) {
+                .padding(.top, PUI.Space.xxs)
+            HStack(spacing: PUI.Space.xs) {
                 Text(AgendaFormat.timeText(start: event.start, end: event.end, isAllDay: false))
                     .monospacedDigit()
                     .layoutPriority(1)
                 if let subtitle = event.displayedSubtitle {
-                    Text("·").foregroundStyle(.tertiary)
+                    Text("·").foregroundStyle(ink.tertiary)
                     Text(subtitle).lineLimit(1)
                 }
                 Spacer(minLength: 0)
@@ -207,77 +193,42 @@ struct NextUpCard: View {
                     RecurrenceIcon()
                 }
             }
-            .font(.system(size: 11))
-            .foregroundStyle(.secondary)
-            .padding(.top, 2)
+            .font(PUI.Font.caption)
+            .foregroundStyle(ink.secondary)
             if let meetingURL = event.meetingURL {
-                HStack(spacing: 6) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "video.fill")
-                            .font(.system(size: 8.5))
-                        Text(event.linkLabel ?? meetingURL.displayHost)
-                            .lineLimit(1)
-                    }
-                    .font(.system(size: 10.5))
-                    .foregroundStyle(.secondary)
+                HStack(spacing: PUI.Space.xs) {
+                    Image(systemName: "video.fill")
+                        .font(.system(size: 9))
+                    Text(event.linkLabel ?? meetingURL.displayHost)
+                        .font(PUI.Font.caption)
+                        .lineLimit(1)
                     Spacer()
-                    JoinButton(url: meetingURL)
+                    CallJoinButton(url: meetingURL)
                 }
-                .padding(.top, 7)
+                .foregroundStyle(ink.secondary)
+                .padding(.top, PUI.Space.xs)
             }
         }
-        .padding(10)
-        .background {
-            shape.fill(RadialGradient(colors: [color.opacity(dark ? 0.26 : 0.18), color.opacity(0)],
-                                      center: .topLeading, startRadius: 0, endRadius: 200))
-        }
-        .surface(radius: Theme.cardRadius, tint: color, tintAmount: 1.2)
+        .padding(PUI.Space.m + 2)
+        .background(shape.fill(isHovered ? ink.fill : .clear))
+        .puiSurface(tint: color)
         .contentShape(shape)
-        .hoverHighlight(cornerRadius: Theme.cardRadius, opacity: 0.03)
+        .onHover { isHovered = $0 }
+        .animation(PUI.Motion.hover, value: isHovered)
         .onTapGesture { onOpen?() }
     }
 }
 
-/// Opens a call: a glossy blue capsule, smaller in event rows. Painted, like today's circle
-/// in the grid, rather than a prominent button style, which turns gray whenever a pinned
-/// popover isn't key.
-struct JoinButton: View {
+/// Partiti UI's Join capsule, opening a call. Scaled down in event rows, where it sits
+/// over the details line.
+struct CallJoinButton: View {
     let url: URL
     var isCompact = false
-    @State private var isHovered = false
 
     var body: some View {
-        Button {
-            NSWorkspace.shared.open(url)
-        } label: {
-            Label("Join", systemImage: "video.fill")
-                .font(.system(size: isCompact ? 10 : 11, weight: .semibold))
-                .labelStyle(JoinLabelStyle())
-                .foregroundStyle(.white)
-                .padding(.horizontal, isCompact ? 7 : 10)
-                .frame(height: isCompact ? 18 : 22)
-                .background {
-                    Capsule().fill(Theme.join.gradient)
-                        .shadow(color: Theme.join.opacity(0.4), radius: isCompact ? 2 : 3, y: 1)
-                    Capsule().fill(LinearGradient(colors: [.white.opacity(isHovered ? 0.30 : 0.18), .white.opacity(0)],
-                                                  startPoint: .top, endPoint: .center))
-                    Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
-                }
-                .contentShape(.capsule)
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .animation(Theme.hover, value: isHovered)
-        .help("Join \(url.displayHost)")
-    }
-
-    private struct JoinLabelStyle: LabelStyle {
-        func makeBody(configuration: Configuration) -> some View {
-            HStack(spacing: 4) {
-                configuration.icon.imageScale(.small)
-                configuration.title
-            }
-        }
+        JoinButton(String(localized: "Join")) { NSWorkspace.shared.open(url) }
+            .scaleEffect(isCompact ? 0.82 : 1, anchor: .trailing)
+            .help("Join \(url.displayHost)")
     }
 }
 

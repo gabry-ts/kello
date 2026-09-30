@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// The scrolling list under the grid: an optional "Next up" card, then sections with a
@@ -10,8 +11,7 @@ struct AgendaView: View {
     let sections: [AgendaSection]
     let now: Date
     var nextUp: CalendarEvent?
-    var emptyText: LocalizedStringKey = "No Events"
-    var emptyImage = "calendar"
+    var empty = Empty(title: String(localized: "No Events"), message: String(localized: "Nothing planned."), symbol: "calendar")
     var maxHeight: CGFloat = 320
     /// Keeps the list this tall whatever it holds, so the popover doesn't resize when
     /// switching tabs or days.
@@ -21,43 +21,51 @@ struct AgendaView: View {
     var completeReminder: (ReminderItem) -> Void = { _ in }
     @State private var contentHeight: CGFloat = 0
 
+    /// What the list shows when there's nothing to list.
+    struct Empty {
+        let title: String
+        let message: String
+        let symbol: String
+    }
+
     var body: some View {
         if sections.isEmpty && nextUp == nil {
-            EmptyState(text: emptyText, systemImage: emptyImage, height: fixedHeight)
+            EmptyState(symbol: empty.symbol, title: empty.title, message: empty.message)
+                .frame(height: fixedHeight, alignment: .top)
         } else {
             let scrolls = contentHeight > (fixedHeight ?? maxHeight)
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if let nextUp {
                         NextUpCard(event: nextUp, now: now) { openEvent(nextUp) }
-                            .padding(.bottom, 3)
+                            .padding(.bottom, PUI.Space.xxs)
                     }
                     ForEach(Array(sections.enumerated()), id: \.element.id) { index, section in
-                        SectionHeader(
+                        AgendaSectionHeader(
                             title: section.isOverdue ? String(localized: "Overdue") : section.title,
                             detail: Self.detail(section),
                             badge: section.isOverdue ? section.entries.count : nil,
                             isFirst: index == 0 && nextUp == nil)
                         if !section.holidays.isEmpty {
                             HolidayLabels(names: section.holidays)
-                                .padding(.bottom, section.entries.isEmpty ? 0 : 5)
+                                .padding(.bottom, section.entries.isEmpty ? 0 : PUI.Space.s)
                         }
-                        VStack(spacing: Theme.rowSpacing) {
+                        VStack(spacing: PUI.Popover.rowGap) {
                             ForEach(Self.blocks(section.entries)) { block in
                                 blockView(block)
                             }
                         }
                     }
                 }
-                .padding(.bottom, scrolls ? 20 : 2)
+                .padding(.bottom, scrolls ? PUI.Space.xl + PUI.Space.xs : PUI.Space.xxs)
                 // Room for the cards' shadows, which the scroll view would otherwise clip.
-                .padding(.horizontal, 4)
+                .padding(.horizontal, PUI.Space.xs)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
             }
             .scrollBounceBehavior(.basedOnSize)
             .scrollIndicators(.never)
             .frame(height: fixedHeight ?? min(max(contentHeight, 1), maxHeight), alignment: .top)
-            .padding(.horizontal, -4)
+            .padding(.horizontal, -PUI.Space.xs)
             .mask {
                 VStack(spacing: 0) {
                     Rectangle()
@@ -131,37 +139,26 @@ struct AgendaView: View {
     }
 }
 
-/// "Today" on the left, an optional red count badge after it, and a quiet detail on the right.
-struct SectionHeader: View {
+/// A day's header: Partiti UI's section header, with a red count for overdue
+/// reminders or a quiet detail on the right.
+struct AgendaSectionHeader: View {
     let title: String
     var detail: String?
     var badge: Int?
     var isFirst = false
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(spacing: 5) {
-            Text(title)
-                .font(.system(size: 11, weight: .semibold))
+        SectionHeader(title) {
             if let badge {
-                Text("\(badge)")
-                    .font(.system(size: 9, weight: .bold))
-                    .monospacedDigit()
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 4)
-                    .frame(minWidth: 14, minHeight: 14)
-                    .background(Theme.destructive, in: .capsule)
-            }
-            Spacer()
-            if let detail {
-                Text(detail)
-                    .font(.system(size: 10))
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                Badge("\(badge)", color: Ink(colorScheme).red, style: .solid)
+            } else if let detail {
+                Text(detail).monospacedDigit()
             }
         }
-        .padding(.horizontal, 3)
-        .padding(.top, isFirst ? 2 : 10)
-        .padding(.bottom, 5)
+        .padding(.horizontal, PUI.Space.xs)
+        .padding(.top, isFirst ? PUI.Space.xxs : PUI.Space.l)
+        .padding(.bottom, PUI.Space.s)
     }
 }
 
@@ -171,51 +168,24 @@ struct HolidayLabels: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        let red = KelloStyle.holiday(colorScheme)
+        VStack(alignment: .leading, spacing: PUI.Space.xs) {
             ForEach(names, id: \.self) { name in
-                HStack(spacing: 4) {
+                HStack(spacing: PUI.Space.xs) {
                     Image(systemName: "star.fill")
                         .font(.system(size: 7.5, weight: .bold))
                     Text(name)
-                        .font(.system(size: 10.5, weight: .semibold))
+                        .font(PUI.Font.badge)
                         .lineLimit(1)
                 }
-                .foregroundStyle(Theme.legible(Theme.holiday, colorScheme))
-                .padding(.horizontal, 7)
-                .frame(height: 17)
-                .background(Theme.holiday.opacity(colorScheme == .dark ? 0.18 : 0.11), in: .capsule)
+                .foregroundStyle(PUI.legible(red, colorScheme))
+                .padding(.horizontal, PUI.Space.s + 1)
+                .frame(height: 16)
+                .background(red.opacity(colorScheme == .dark ? 0.18 : 0.11), in: .capsule)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Holiday: \(name)")
             }
         }
-        .padding(.horizontal, 2)
-    }
-}
-
-/// What the list shows when there's nothing to list.
-struct EmptyState: View {
-    let text: LocalizedStringKey
-    let systemImage: String
-    /// Stands in for a list of this height: centered in it, without a card.
-    var height: CGFloat?
-
-    var body: some View {
-        let label = VStack(spacing: 6) {
-            Image(systemName: systemImage)
-                .font(.system(size: 18, weight: .regular))
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.tertiary)
-            Text(text)
-                .font(.system(size: 11.5, weight: .medium))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        if let height {
-            label.frame(height: height)
-        } else {
-            label
-                .padding(.vertical, 16)
-                .surface(radius: Theme.groupRadius, elevated: false)
-        }
+        .padding(.horizontal, PUI.Space.xxs)
     }
 }

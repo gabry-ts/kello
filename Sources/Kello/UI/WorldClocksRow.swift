@@ -1,4 +1,5 @@
 import KelloCore
+import PartitiUI
 import SwiftUI
 
 /// The extra time zones above the agenda: one card split into a column per clock, each
@@ -7,6 +8,7 @@ import SwiftUI
 struct WorldClocksRow: View {
     let zones: [WorldClockZone]
     let now: Date
+    @Environment(\.colorScheme) private var colorScheme
 
     private static let maxFitting = 3
     private static let scrollingWidth: CGFloat = 76
@@ -23,8 +25,8 @@ struct WorldClocksRow: View {
                 .scrollIndicators(.never)
             }
         }
-        .padding(.vertical, 5)
-        .surface(radius: Theme.groupRadius, elevated: false)
+        .padding(.vertical, PUI.Space.s)
+        .puiSurface(radius: PUI.Radius.group, elevated: false)
     }
 
     private func columns(_ readings: [WorldClockReading], width: CGFloat?) -> some View {
@@ -32,7 +34,7 @@ struct WorldClocksRow: View {
             ForEach(Array(readings.enumerated()), id: \.offset) { index, reading in
                 if index > 0 {
                     Rectangle()
-                        .fill(.primary.opacity(0.09))
+                        .fill(Ink(colorScheme).hairline)
                         .frame(width: 0.5, height: 22)
                 }
                 ClockColumn(reading: reading)
@@ -48,30 +50,32 @@ private struct ClockColumn: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
+        let ink = Ink(colorScheme)
         VStack(spacing: 1) {
             HStack(spacing: 3) {
                 Image(systemName: reading.isDaytime ? "sun.max.fill" : "moon.fill")
                     .font(.system(size: 7.5, weight: .semibold))
-                    .foregroundStyle(Theme.legible(reading.isDaytime ? Theme.daytime : Theme.nighttime, colorScheme))
+                    .foregroundStyle(reading.isDaytime ? KelloStyle.daytime(colorScheme) : KelloStyle.nighttime(colorScheme))
                 Text(reading.name)
-                    .font(.system(size: 9.5, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .font(PUI.Font.caption.weight(.medium))
+                    .foregroundStyle(ink.secondary)
                     .lineLimit(1)
             }
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(reading.time)
-                    .font(.system(size: 11.5, weight: .semibold))
+                    .font(PUI.Font.callout.weight(.semibold))
                     .monospacedDigit()
+                    .foregroundStyle(ink.primary)
                     .lineLimit(1)
                 if let offset = reading.dayOffsetText {
                     Text(offset)
-                        .font(.system(size: 8, weight: .bold))
+                        .font(PUI.Font.badge)
                         .monospacedDigit()
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(ink.secondary)
                 }
             }
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, PUI.Space.xs)
         .accessibilityElement(children: .combine)
     }
 }

@@ -1144,6 +1144,26 @@
         }
       }
     },
+    "Nothing due." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niente in scadenza."
+          }
+        }
+      }
+    },
+    "Nothing planned." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niente in programma."
+          }
+        }
+      }
+    },
     "Notifications" : {
       "localizations" : {
         "it" : {
@@ -1354,12 +1374,12 @@
         }
       }
     },
-    "Quit Kello" : {
+    "Quit" : {
       "localizations" : {
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Esci da Kello"
+            "value" : "Esci"
           }
         }
       }
@@ -1640,6 +1660,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oggi"
+          }
+        }
+      }
+    },
+    "Try another word." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prova con un’altra parola."
           }
         }
       }
