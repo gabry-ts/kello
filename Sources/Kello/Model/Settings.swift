@@ -10,6 +10,8 @@ enum ListTab: String, Codable, CaseIterable {
 /// Everything persisted to disk, as JSON.
 struct Settings: Codable, Hashable {
     var menuBar = MenuBarSettings()
+    /// The popover's sections, in order, and which are shown.
+    var popover = PopoverLayout()
     var firstWeekday = FirstWeekday.system
     var showWeekNumbers = false
     var agendaMode = AgendaMode.day
@@ -33,6 +35,7 @@ struct Settings: Codable, Hashable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Settings()
         menuBar = try c.decodeIfPresent(MenuBarSettings.self, forKey: .menuBar) ?? d.menuBar
+        popover = try c.decodeIfPresent(PopoverLayout.self, forKey: .popover) ?? d.popover
         firstWeekday = try c.decodeIfPresent(FirstWeekday.self, forKey: .firstWeekday) ?? d.firstWeekday
         showWeekNumbers = try c.decodeIfPresent(Bool.self, forKey: .showWeekNumbers) ?? d.showWeekNumbers
         agendaMode = try c.decodeIfPresent(AgendaMode.self, forKey: .agendaMode) ?? d.agendaMode

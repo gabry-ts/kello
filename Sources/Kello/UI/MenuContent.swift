@@ -10,8 +10,10 @@ enum EditorRoute: Hashable {
     case quickEntry(calendarID: String)
 }
 
-/// The menu bar popover: the month as its header, the grid, the permission prompt while
-/// needed, the toolbar, today's counts, the agenda or the reminders, and the footer.
+/// The menu bar popover: the month as its header, then its sections in the order and
+/// with the visibility the user chose, and the footer. By default that's the grid, the
+/// toolbar, today's counts, the extra clocks and the agenda or the reminders, opening
+/// with the Next up card. The permission prompt follows the grid while needed.
 /// Search and the editors replace all of it while open.
 struct MenuContent: View {
     let openSettings: () -> Void
@@ -73,52 +75,48 @@ struct MenuContent: View {
         let reminders = visibleReminders
         let canReadEvents = calendars.eventsAccess == .granted
         let canReadReminders = calendars.remindersAccess == .granted
+        let layout = settings.popover
+        let nextUp = canReadEvents && layout.isOn(.nextUp) ? Agenda.nextUp(events: todayEvents, now: now) : nil
 
         return PopoverScaffold(width: PUI.Popover.compact) {
             MonthHeader(viewModel: viewModel)
         } content: {
-            MonthGridView(
-                viewModel: viewModel,
-                dots: AgendaFormat.dotColors(days: gridDays, events: gridEvents).mapValues { $0.map(Color.init) },
-                holidays: Holidays.days(gridDays, holidays: holidays(in: gridDays, calendarID: holidayCalendarID)),
-                onDoubleClick: canReadEvents ? { newEvent(on: $0, now: now) } : nil)
-            if calendars.needsPermissionPrompt {
-                PermissionView()
-            }
-            AgendaToolbar(
-                search: canReadEvents ? { isSearching = true } : nil,
-                newEvent: canReadEvents ? { newEvent(on: viewModel.selectedDay, now: now) } : nil,
-                quickEvent: canReadEvents ? { route = .quickEntry(calendarID: defaultCalendarID) } : nil,
-                newReminder: canReadReminders ? { newReminder(on: viewModel.selectedDay) } : nil)
-            if canReadEvents || canReadReminders {
-                StatusRow(status: AgendaStatus(events: todayEvents, reminders: reminders, now: now), showsOverdue: canReadReminders)
-            }
-            if !settings.timeZones.isEmpty {
-                WorldClocksRow(zones: settings.timeZones, now: now)
-            }
-            if canReadReminders && (settings.listTab == .reminders || !canReadEvents) {
-                // Overdue and today's reminders, plus the selected day's.
-                let days = Array(Set([calendar.startOfDay(for: now), viewModel.selectedDay])).sorted()
-                AgendaView(
-                    sections: Agenda.sections(days: days, events: [], reminders: reminders, now: now),
-                    now: now,
-                    empty: .init(title: String(localized: "No Reminders"), message: String(localized: "Nothing due."),
-                                 symbol: "checklist.checked"),
-                    fixedHeight: KelloStyle.listHeight,
-                    openReminder: { route = .reminder(ReminderDraft($0)) },
-                    completeReminder: complete)
-            } else if canReadEvents {
-                let agendaDays = Agenda.days(mode: settings.agendaMode, selectedDay: viewModel.selectedDay, now: now)
-                let showsToday = agendaDays.contains { calendar.isDate($0, inSameDayAs: now) }
-                AgendaView(
-                    sections: Agenda.sections(days: agendaDays, events: events(in: agendaDays), reminders: [],
-                                              holidays: holidays(in: agendaDays, calendarID: holidayCalendarID), now: now),
-                    now: now,
-                    nextUp: showsToday ? Agenda.nextUp(events: todayEvents, now: now) : nil,
-                    fixedHeight: KelloStyle.listHeight,
-                    openEvent: { event in
-                        if let draft = calendars.draft(for: event) { route = .event(draft) }
-                    })
+            ForEach(layout.visibleSections, id: \.self) { section in
+                switch section {
+                case .grid:
+                    MonthGridView(
+                        viewModel: viewModel,
+                        dots: AgendaFormat.dotColors(days: gridDays, events: gridEvents).mapValues { $0.map(Color.init) },
+                        holidays: Holidays.days(gridDays, holidays: holidays(in: gridDays, calendarID: holidayCalendarID)),
+                        onDoubleClick: canReadEvents ? { newEvent(on: $0, now: now) } : nil)
+                    if calendars.needsPermissionPrompt {
+                        PermissionView()
+                    }
+                case .toolbar:
+                    AgendaToolbar(
+                        search: canReadEvents ? { isSearching = true } : nil,
+                        newEvent: canReadEvents ? { newEvent(on: viewModel.selectedDay, now: now) } : nil,
+                        quickEvent: canReadEvents ? { route = .quickEntry(calendarID: defaultCalendarID) } : nil,
+                        newReminder: canReadReminders ? { newReminder(on: viewModel.selectedDay) } : nil)
+                case .status:
+                    if canReadEvents || canReadReminders {
+                        StatusRow(status: AgendaStatus(events: todayEvents, reminders: reminders, now: now), showsOverdue: canReadReminders)
+                    }
+                case .clocks:
+                    if !settings.timeZones.isEmpty {
+                        WorldClocksRow(zones: settings.timeZones, now: now)
+                    }
+                case .nextUp:
+                    // Right above the list, the card is the list's first row instead. On its
+                    // own it's shown on both tabs and for any selected day, so the popover
+                    // keeps its height.
+                    if let nextUp, !layout.showsNextUpInList {
+                        NextUpCard(event: nextUp, now: now) { openEditor(nextUp) }
+                    }
+                case .list:
+                    list(now: now, reminders: reminders, todayEvents: todayEvents, holidayCalendarID: holidayCalendarID,
+                         nextUp: layout.showsNextUpInList ? nextUp : nil)
+                }
             }
         } footer: {
             PopoverFooter(
@@ -134,6 +132,43 @@ struct MenuContent: View {
                 }
             }
         }
+    }
+
+    /// The reminders or the agenda, always as tall, so the popover doesn't resize when
+    /// switching tabs or days.
+    @ViewBuilder
+    private func list(now: Date, reminders: [ReminderItem], todayEvents: [CalendarEvent], holidayCalendarID: String?,
+                      nextUp: CalendarEvent?) -> some View {
+        let settings = store.settings
+        let canReadEvents = calendars.eventsAccess == .granted
+        let canReadReminders = calendars.remindersAccess == .granted
+        if canReadReminders && (settings.listTab == .reminders || !canReadEvents) {
+            // Overdue and today's reminders, plus the selected day's.
+            let days = Array(Set([calendar.startOfDay(for: now), viewModel.selectedDay])).sorted()
+            AgendaView(
+                sections: Agenda.sections(days: days, events: [], reminders: reminders, now: now),
+                now: now,
+                empty: .init(title: String(localized: "No Reminders"), message: String(localized: "Nothing due."),
+                             symbol: "checklist.checked"),
+                fixedHeight: KelloStyle.listHeight,
+                openReminder: { route = .reminder(ReminderDraft($0)) },
+                completeReminder: complete)
+        } else if canReadEvents {
+            let agendaDays = Agenda.days(mode: settings.agendaMode, selectedDay: viewModel.selectedDay, now: now)
+            let showsToday = agendaDays.contains { calendar.isDate($0, inSameDayAs: now) }
+            AgendaView(
+                sections: Agenda.sections(days: agendaDays, events: events(in: agendaDays), reminders: [],
+                                          holidays: holidays(in: agendaDays, calendarID: holidayCalendarID), now: now),
+                now: now,
+                nextUp: showsToday ? nextUp : nil,
+                fixedHeight: KelloStyle.listHeight,
+                openEvent: openEditor)
+        }
+    }
+
+    /// Opens an event in the editor.
+    private func openEditor(_ event: CalendarEvent) {
+        if let draft = calendars.draft(for: event) { route = .event(draft) }
     }
 
     @ViewBuilder

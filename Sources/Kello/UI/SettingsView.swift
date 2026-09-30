@@ -22,6 +22,7 @@ struct SettingsView: View {
         case calendars
         case notifications
         case menuBar
+        case popover
         case timeZones
         case about
 
@@ -31,6 +32,7 @@ struct SettingsView: View {
             case .calendars: String(localized: "Calendars")
             case .notifications: String(localized: "Notifications")
             case .menuBar: String(localized: "Menu Bar")
+            case .popover: String(localized: "Popover")
             case .timeZones: String(localized: "Time Zones")
             case .about: String(localized: "About")
             }
@@ -42,6 +44,7 @@ struct SettingsView: View {
             case .calendars: "calendar"
             case .notifications: "bell.badge.fill"
             case .menuBar: "menubar.rectangle"
+            case .popover: "list.bullet.below.rectangle"
             case .timeZones: "globe"
             case .about: "info"
             }
@@ -54,6 +57,7 @@ struct SettingsView: View {
             case .calendars: .red
             case .notifications: .orange
             case .menuBar: .blue
+            case .popover: .purple
             case .timeZones: .indigo
             case .about: .teal
             }
@@ -87,6 +91,7 @@ struct SettingsView: View {
         case .calendars: CalendarsSettingsView()
         case .notifications: NotificationsSettingsView()
         case .menuBar: MenuBarSettingsView()
+        case .popover: PopoverSettingsView()
         case .timeZones: TimeZonesSettingsView()
         case .about: AboutView()
         }

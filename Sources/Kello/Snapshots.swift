@@ -69,6 +69,10 @@ enum Snapshots {
         for dark in [false, true] {
             snapPopover(popover(SettingsStore(settings: clocks), calendars), name: "popover-clocks-\(dark ? "dark" : "light")", dark: dark, dir: dir)
         }
+        var custom = clocks
+        custom.popover = PopoverLayout(items: [PopoverSectionItem(.nextUp), PopoverSectionItem(.clocks),
+                                               PopoverSectionItem(.status, isOn: false)])
+        snapPopover(popover(SettingsStore(settings: custom), calendars), name: "popover-custom-light", dark: false, dir: dir)
         snapWindow(TimeZonePicker(excluded: [], onPick: { _ in }), name: "time-zone-picker-light", dark: false, dir: dir,
                    size: NSSize(width: 420, height: 440))
         for dark in [false, true] {

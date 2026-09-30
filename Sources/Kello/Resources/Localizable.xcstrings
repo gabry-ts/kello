@@ -254,6 +254,26 @@
         }
       }
     },
+    "Agenda and reminders" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agenda e promemoria"
+          }
+        }
+      }
+    },
+    "Agenda or reminders, search, keep open and new. Always under the grid." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agenda o promemoria, cerca, mantieni aperto e nuovo. Sempre sotto la griglia."
+          }
+        }
+      }
+    },
     "Alert" : {
       "localizations" : {
         "it" : {
@@ -320,6 +340,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mostra anche nella barra dei menu"
+          }
+        }
+      }
+    },
+    "Always at the top." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sempre in alto."
           }
         }
       }
@@ -630,6 +660,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trascina per riordinare. Lascia vuota l’etichetta per mostrare la città."
+          }
+        }
+      }
+    },
+    "Drag to reorder. Switch off what you don't need." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trascina per riordinare. Disattiva ciò che non ti serve."
           }
         }
       }
@@ -994,6 +1034,16 @@
         }
       }
     },
+    "Month grid" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Griglia del mese"
+          }
+        }
+      }
+    },
     "Month name (instead of number)" : {
       "localizations" : {
         "it" : {
@@ -1080,6 +1130,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mese successivo"
+          }
+        }
+      }
+    },
+    "Next event" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prossimo evento"
           }
         }
       }
@@ -1326,12 +1386,32 @@
         }
       }
     },
+    "Overdue reminders and today's events." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promemoria in ritardo ed eventi di oggi."
+          }
+        }
+      }
+    },
     "Pattern" : {
       "localizations" : {
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Formato"
+          }
+        }
+      }
+    },
+    "Popover" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pannello"
           }
         }
       }
@@ -1526,6 +1606,16 @@
         }
       }
     },
+    "Sections" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sezioni"
+          }
+        }
+      }
+    },
     "Settings…" : {
       "localizations" : {
         "it" : {
@@ -1576,6 +1666,16 @@
         }
       }
     },
+    "Shown once you add time zones." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrati quando aggiungi dei fusi orari."
+          }
+        }
+      }
+    },
     "Starts" : {
       "localizations" : {
         "it" : {
@@ -1622,6 +1722,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dimensione testo"
+          }
+        }
+      }
+    },
+    "The day's events or your reminders. Always at the bottom." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gli eventi del giorno o i tuoi promemoria. Sempre in fondo."
           }
         }
       }
@@ -1682,6 +1792,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oggi"
+          }
+        }
+      }
+    },
+    "Today's counts" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conteggi di oggi"
+          }
+        }
+      }
+    },
+    "Today's next event, and how soon it starts." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il prossimo evento di oggi, e tra quanto inizia."
+          }
+        }
+      }
+    },
+    "Toolbar" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barra strumenti"
           }
         }
       }
@@ -1776,12 +1916,32 @@
         }
       }
     },
+    "What the calendar popover shows, and in which order." : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cosa mostra il pannello del calendario, e in quale ordine."
+          }
+        }
+      }
+    },
     "What the date and time in the menu bar show." : {
       "localizations" : {
         "it" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cosa mostrano la data e l’ora nella barra dei menu."
+          }
+        }
+      }
+    },
+    "World clocks" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orologi mondiali"
           }
         }
       }
