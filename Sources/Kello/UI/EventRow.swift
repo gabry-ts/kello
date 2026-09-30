@@ -219,15 +219,14 @@ struct NextUpCard: View {
     }
 }
 
-/// Partiti UI's Join capsule, opening a call. Scaled down in event rows, where it sits
-/// over the details line.
+/// Partiti UI's Join capsule, opening a call. Compact in event rows, where it sits over
+/// the details line.
 struct CallJoinButton: View {
     let url: URL
     var isCompact = false
 
     var body: some View {
-        JoinButton(String(localized: "Join")) { NSWorkspace.shared.open(url) }
-            .scaleEffect(isCompact ? 0.82 : 1, anchor: .trailing)
+        JoinButton(size: isCompact ? .compact : .regular) { NSWorkspace.shared.open(url) }
             .help("Join \(url.displayHost)")
     }
 }
