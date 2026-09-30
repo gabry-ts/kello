@@ -33,7 +33,8 @@ struct ReminderEditorView: View {
                                 .labelsHidden()
                                 .datePickerStyle(.field)
                         }
-                        RowSwitch(String(localized: "Date"), isOn: $draft.hasDueDate, mini: true)
+                        Toggle(String(localized: "Date"), isOn: $draft.hasDueDate)
+                            .toggleStyle(PUISwitchStyle(mini: true, showsLabel: false))
                     }
                     if draft.hasDueDate {
                         Hairline(leading: PUI.Space.l)
@@ -43,7 +44,8 @@ struct ReminderEditorView: View {
                                     .labelsHidden()
                                     .datePickerStyle(.field)
                             }
-                            RowSwitch(String(localized: "Time"), isOn: $draft.hasDueTime, mini: true)
+                            Toggle(String(localized: "Time"), isOn: $draft.hasDueTime)
+                                .toggleStyle(PUISwitchStyle(mini: true, showsLabel: false))
                         }
                     }
                 }

@@ -14,7 +14,8 @@ struct GeneralView: View {
         KelloPane(pane: .general, subtitle: String(localized: "How the calendar in the menu bar popover is laid out.")) {
             SettingsGroup(String(localized: "Startup")) {
                 SettingsRow(String(localized: "Launch at login")) {
-                    RowSwitch(String(localized: "Launch at login"), isOn: $launchAtLogin)
+                    Toggle(String(localized: "Launch at login"), isOn: $launchAtLogin)
+                        .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
                 if loginItemStatus == .requiresApproval {
                     SettingsRow(String(localized: "Waiting for your approval in System Settings")) {
@@ -39,7 +40,8 @@ struct GeneralView: View {
                     .fixedSize()
                 }
                 SettingsRow(String(localized: "Show week numbers")) {
-                    RowSwitch(String(localized: "Show week numbers"), isOn: $store.settings.showWeekNumbers)
+                    Toggle(String(localized: "Show week numbers"), isOn: $store.settings.showWeekNumbers)
+                        .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
             }
             SettingsGroup(String(localized: "Keyboard Shortcut"), footer: String(localized: "Opens the calendar from any app.")) {

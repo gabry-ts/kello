@@ -81,9 +81,10 @@ struct CalendarToggle: View {
                 .font(PUI.Font.body)
                 .foregroundStyle(Ink(colorScheme).primary)
             Spacer(minLength: PUI.Space.l)
-            RowSwitch(calendar.title, isOn: Binding(
+            Toggle(calendar.title, isOn: Binding(
                 get: { store.settings.isCalendarVisible(calendar.id) },
                 set: { store.settings.setCalendar(calendar.id, visible: $0) }))
+                .toggleStyle(PUISwitchStyle(showsLabel: false))
         }
         .padding(.horizontal, PUI.Space.l)
         .frame(minHeight: 38)

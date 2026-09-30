@@ -15,12 +15,13 @@ struct NotificationsSettingsView: View {
             SettingsGroup(String(localized: "Meetings"),
                           footer: String(localized: "For events in the calendars Kello shows. Click a notification to open that day, or Join to open the call.")) {
                 SettingsRow(String(localized: "Notify before meetings")) {
-                    RowSwitch(String(localized: "Notify before meetings"), isOn: Binding(
+                    Toggle(String(localized: "Notify before meetings"), isOn: Binding(
                         get: { alerts.isEnabled },
                         set: { enabled in
                             store.settings.meetingAlerts.isEnabled = enabled
                             if enabled { Task { await notifier.requestAuthorization() } }
                         }))
+                        .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
                 SettingsRow(String(localized: "Notify me")) {
                     Picker("Notify me", selection: $store.settings.meetingAlerts.minutesBefore) {
@@ -33,7 +34,8 @@ struct NotificationsSettingsView: View {
                 }
                 .enabledLook(alerts.isEnabled)
                 SettingsRow(String(localized: "Only events with a call link")) {
-                    RowSwitch(String(localized: "Only events with a call link"), isOn: $store.settings.meetingAlerts.onlyWithMeetingLink)
+                    Toggle(String(localized: "Only events with a call link"), isOn: $store.settings.meetingAlerts.onlyWithMeetingLink)
+                        .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
                 .enabledLook(alerts.isEnabled)
             }

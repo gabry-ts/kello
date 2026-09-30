@@ -219,7 +219,7 @@ struct TimeZonePicker: View {
                 Button("Add") { selection.map(pick) }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(PrimaryButtonStyle(height: PUI.Control.regular, fullWidth: false))
-                    .enabledLook(selection != nil)
+                    .disabled(selection == nil)
             }
             .padding(PUI.Space.l)
         }

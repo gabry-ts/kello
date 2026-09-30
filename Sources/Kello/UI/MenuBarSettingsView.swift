@@ -27,11 +27,13 @@ struct MenuBarSettingsView: View {
                     row(item.component)
                 }
                 SettingsRow(String(localized: "Month name (instead of number)")) {
-                    RowSwitch(String(localized: "Month name (instead of number)"), isOn: $store.settings.menuBar.showMonthName)
+                    Toggle(String(localized: "Month name (instead of number)"), isOn: $store.settings.menuBar.showMonthName)
+                        .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
                 .enabledLook(store.settings.menuBar.isOn(.date))
                 SettingsRow(String(localized: "24-hour clock")) {
-                    RowSwitch(String(localized: "24-hour clock"), isOn: $store.settings.menuBar.is24Hour)
+                    Toggle(String(localized: "24-hour clock"), isOn: $store.settings.menuBar.is24Hour)
+                        .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
                 .enabledLook(store.settings.menuBar.isOn(.time))
             }

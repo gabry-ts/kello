@@ -59,7 +59,8 @@ struct EventEditorView: View {
                 FormRow("Calendar") { CalendarPicker(calendarID: $draft.calendarID) }
                 Hairline(leading: PUI.Space.l)
                 FormRow("All-day") {
-                    RowSwitch(String(localized: "All-day"), isOn: $draft.isAllDay, mini: true)
+                    Toggle(String(localized: "All-day"), isOn: $draft.isAllDay)
+                        .toggleStyle(PUISwitchStyle(mini: true, showsLabel: false))
                 }
                 Hairline(leading: PUI.Space.l)
                 FormRow("Starts") {
@@ -180,7 +181,7 @@ struct EditorHeader: View {
                 Button("Save", action: onSave)
                     .buttonStyle(PrimaryButtonStyle(height: PUI.Control.small, fullWidth: false))
                     .keyboardShortcut(.defaultAction)
-                    .enabledLook(canSave)
+                    .disabled(!canSave)
             }
         }
         .frame(height: PUI.Control.small)
