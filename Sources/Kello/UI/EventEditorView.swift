@@ -59,9 +59,7 @@ struct EventEditorView: View {
                 FormRow("Calendar") { CalendarPicker(calendarID: $draft.calendarID) }
                 Hairline(leading: PUI.Space.l)
                 FormRow("All-day") {
-                    Toggle("All-day", isOn: $draft.isAllDay)
-                        .labelsHidden()
-                        .toggleStyle(PUISwitchStyle(mini: true))
+                    RowSwitch(String(localized: "All-day"), isOn: $draft.isAllDay, mini: true)
                 }
                 Hairline(leading: PUI.Space.l)
                 FormRow("Starts") {

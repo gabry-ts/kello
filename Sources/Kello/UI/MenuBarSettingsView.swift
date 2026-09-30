@@ -57,11 +57,11 @@ struct MenuBarSettingsView: View {
                 .font(PUI.Font.body)
                 .foregroundStyle(ink.primary)
             Spacer(minLength: PUI.Space.l)
-            Toggle(component.title, isOn: Binding(
+            Toggle(isOn: Binding(
                 get: { store.settings.menuBar.isOn(component) },
-                set: { store.settings.menuBar.set(component, isOn: $0) }))
+                set: { store.settings.menuBar.set(component, isOn: $0) })) { EmptyView() }
                 .toggleStyle(PUISwitchStyle())
-                .labelsHidden()
+                .accessibilityLabel(Text(component.title))
         }
         .padding(.horizontal, PUI.Space.l)
         .frame(minHeight: 38)

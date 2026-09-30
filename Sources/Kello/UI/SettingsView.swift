@@ -108,20 +108,3 @@ struct KelloPane<Content: View>: View {
         .scrollBounceBehavior(.basedOnSize)
     }
 }
-
-/// A switch for a settings row, labeled for accessibility with the row's title.
-struct RowSwitch: View {
-    let title: String
-    @Binding var isOn: Bool
-
-    init(_ title: String, isOn: Binding<Bool>) {
-        self.title = title
-        self._isOn = isOn
-    }
-
-    var body: some View {
-        Toggle(title, isOn: $isOn)
-            .toggleStyle(PUISwitchStyle())
-            .labelsHidden()
-    }
-}
