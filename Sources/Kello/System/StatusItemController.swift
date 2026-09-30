@@ -1,5 +1,6 @@
 import AppKit
 import Observation
+import PartitiUI
 import SwiftUI
 
 /// State shared between the popover's content and its controller.
@@ -66,7 +67,7 @@ final class StatusItemController: NSObject, NSPopoverDelegate {
         // Partiti UI's menu bar type, medium with monospaced digits so the title keeps its
         // width as the minutes change, at the size chosen in settings.
         button.attributedTitle = NSAttributedString(string: title.text, attributes: [
-            .font: NSFont.monospacedDigitSystemFont(ofSize: title.size, weight: .medium),
+            .font: PUI.Font.menuBarNSFont(size: title.size),
         ])
         button.setAccessibilityLabel("Kello")
     }
